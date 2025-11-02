@@ -1,0 +1,9 @@
+# Virtual Environment (tên venv của bạn)
+venv/
+
+# File biến môi trường
+.env
+
+# Python cache
+__pycache__/
+*.pyc

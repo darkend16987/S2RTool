@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture S2R Tool - Sketch to Render</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1>🏗️ Architecture S2R Tool</h1>
+            <p class="header-subtitle">Sketch to Photorealistic Render • Powered by Gemini AI</p>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER - 3 COLUMNS -->
+    <div class="main-container">
+        
+        <!-- =============================================== -->
+        <!-- COLUMN 1: INPUT SKETCH -->
+        <!-- =============================================== -->
+        <aside class="panel panel-input">
+            <div class="panel-header">
+                <span class="step-badge">Bước 1</span>
+                <h2>Upload Sketch</h2>
+            </div>
+            
+            <!-- Image Uploader -->
+            <div id="imageUploader" class="image-uploader">
+                <input type="file" id="uploadSketch" accept="image/*" style="display: none;">
+                <label for="uploadSketch" id="uploadLabel" class="upload-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span class="upload-text">Kéo thả hoặc nhấn để tải ảnh</span>
+                    <span class="upload-hint">JPG, PNG • Max 16MB</span>
+                </label>
+                <img id="previewImage" src="" alt="Sketch preview" class="preview-image hidden">
+            </div>
+            
+            <!-- Analyze Button -->
+            <button id="analyzeSketchButton" class="btn-primary" disabled>
+                <span id="analyzeSpinner" class="spinner hidden"></span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Phân tích Sketch (AI)
+            </button>
+            
+            <!-- Error Message -->
+            <div id="analyzeError" class="message error-message hidden"></div>
+            
+            <!-- Info Box -->
+            <div class="info-box">
+                <strong>💡 Tips:</strong>
+                <ul>
+                    <li>Sketch rõ ràng, đủ chi tiết</li>
+                    <li>Tỷ lệ chuẩn, góc nhìn thẳng</li>
+                    <li>Có thể là vẽ tay hoặc CAD</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- =============================================== -->
+        <!-- COLUMN 2: PARAMETERS FORM -->
+        <!-- =============================================== -->
+        <main class="panel panel-form">
+            <div class="panel-header">
+                <span class="step-badge">Bước 2</span>
+                <h2>Tinh chỉnh Thông số</h2>
+            </div>
+            
+            <form id="renderPromptForm">
+                
+                <!-- Main Description -->
+                <div class="form-group">
+                    <label for="main_description">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        Mô tả chính (Main Prompt)
+                    </label>
+                    <textarea id="main_description" rows="3" placeholder="AI sẽ điền tự động sau khi phân tích..."></textarea>
+                </div>
+
+                <!-- Aspect Ratio & Viewpoint -->
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="aspect_ratio">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                            Tỷ lệ khung hình
+                        </label>
+                        <select id="aspect_ratio">
+                            <option value="" disabled selected>Đang tải...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="viewpoint">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Góc nhìn (Camera)
+                        </label>
+                        <select id="viewpoint">
+                            <option value="main_facade">Mặt tiền chính</option>
+                            <option value="three_quarter">Góc 3/4 (45°)</option>
+                            <option value="aerial_angle">Góc cao (Bird's eye)</option>
+                            <option value="low_angle">Góc thấp (Worm's eye)</option>
+                            <option value="balcony_closeup">Cận cảnh ban công</option>
+                            <option value="entrance_detail">Chi tiết lối vào</option>
+                            <option value="interior_exterior">Từ trong nhìn ra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fidelity Slider -->
+                <div class="form-group">
+                    <label for="sketch_adherence">
+                        Độ bám sát Sketch: 
+                        <span id="sketch_adherence_value" class="range-value">0.95</span>
+                    </label>
+                    <input type="range" id="sketch_adherence" min="0.5" max="1.0" step="0.01" value="0.95" class="range-slider">
+                    <div class="range-labels">
+                        <span>Sáng tạo</span>
+                        <span>Chính xác</span>
+                    </div>
+                </div>
+
+                <!-- Collapsible Sections -->
+                <details class="form-section" open>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        Yếu tố then chốt (Critical Elements)
+                    </summary>
+                    <div class="section-content">
+                        <div id="criticalElementsContainer" class="dynamic-container"></div>
+                        <button type="button" class="btn-add" data-container="criticalElementsContainer" data-type="element">
+                            + Thêm yếu tố
+                        </button>
+                    </div>
+                </details>
+
+                <details class="form-section" open>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        Vật liệu (Materials)
+                    </summary>
+                    <div class="section-content">
+                        <div id="materialsPreciseContainer" class="dynamic-container"></div>
+                        <button type="button" class="btn-add" data-container="materialsPreciseContainer" data-type="material">
+                            + Thêm vật liệu
+                        </button>
+                    </div>
+                </details>
+
+                <details class="form-section">
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        Môi trường & Bối cảnh
+                    </summary>
+                    <div class="section-content">
+                        <div id="environmentContainer" class="dynamic-container"></div>
+                        <button type="button" class="btn-add" data-container="environmentContainer" data-type="setting">
+                            + Thêm bối cảnh
+                        </button>
+                    </div>
+                </details>
+                
+                <details class="form-section">
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        Từ khóa Phong cách
+                    </summary>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <input type="text" id="style_keywords" placeholder="professional architectural photography, 8K UHD..." value="professional architectural photography, hyper-realistic rendering, 8K UHD, cinematic color grading">
+                        </div>
+                    </div>
+                </details>
+
+                <details class="form-section">
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        Thông số Kỹ thuật
+                    </summary>
+                    <div class="section-content">
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="tech_camera">Máy ảnh:</label>
+                                <input type="text" id="tech_camera" value="Canon EOS 5D Mark IV">
+                            </div>
+                            <div class="form-group">
+                                <label for="tech_lens">Ống kính:</label>
+                                <input type="text" id="tech_lens" value="24mm wide-angle">
+                            </div>
+                            <div class="form-group">
+                                <label for="tech_perspective">Góc nhìn:</label>
+                                <input type="text" id="tech_perspective" value="eye-level, straight-on">
+                            </div>
+                            <div class="form-group">
+                                <label for="tech_lighting">Ánh sáng:</label>
+                                <input type="text" id="tech_lighting" value="natural sunlight, golden hour">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="form-section">
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                        Negative Prompt
+                    </summary>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <textarea id="negative_prompt" rows="3">sketch, drawing, illustration, cartoon, anime, blurry, low resolution, distorted proportions, unrealistic lighting</textarea>
+                        </div>
+                    </div>
+                </details>
+            </form>
+        </main>
+
+        <!-- =============================================== -->
+        <!-- COLUMN 3: OUTPUT & ACTIONS -->
+        <!-- =============================================== -->
+        <aside class="panel panel-output">
+            <div class="panel-header">
+                <span class="step-badge">Bước 3</span>
+                <h2>Kết quả Render</h2>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="output-actions">
+                <!-- Export JSON button will be inserted here by JS -->
+                
+                <button id="generateRenderButton" class="btn-submit" disabled>
+                    <span id="renderSpinner" class="spinner hidden"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Tạo Render
+                </button>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="renderError" class="message error-message hidden"></div>
+            
+            <!-- Gallery -->
+            <div id="gallery" class="gallery">
+                <div class="gallery-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <p>Kết quả render sẽ xuất hiện ở đây</p>
+                </div>
+            </div>
+            
+            <!-- Output Controls -->
+            <div id="outputControls" class="output-controls hidden">
+                <button class="btn-secondary btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Tải về
+                </button>
+                <button class="btn-secondary btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                    Tạo lại
+                </button>
+                <button class="btn-secondary btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg>
+                    Làm Reference
+                </button>
+            </div>
+            
+            <!-- Stats Box -->
+            <div id="statsBox" class="stats-box hidden">
+                <div class="stat-item">
+                    <span class="stat-label">Thời gian:</span>
+                    <span class="stat-value" id="statTime">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Kích thước:</span>
+                    <span class="stat-value" id="statSize">-</span>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+        <p>Made by <strong>Nam Ta</strong> + <strong>Gemini AI</strong></p>
+        <p>©2025 • Architecture S2R Tool • All rights reserved</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
