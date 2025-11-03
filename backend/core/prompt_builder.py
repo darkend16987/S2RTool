@@ -52,7 +52,10 @@ You are given TWO images in this exact order:
    Lighting: {lighting}
    Materials: {materials}
 
-7. **CRITICAL EXCLUSIONS** - DO NOT include any of these:
+7. **ENVIRONMENT & CONTEXT** (CRITICAL - Include ALL of these):
+   {environment}
+
+8. **CRITICAL EXCLUSIONS** - DO NOT include any of these:
    {negative_items}
 
 **OUTPUT**: Single photorealistic architectural photograph, no text/watermarks
@@ -83,9 +86,13 @@ You are given TWO images in this exact order:
    Camera: {camera}
    Lens: {lens}
    Lighting: {lighting}
+   Materials: {materials}
    Viewpoint: {viewpoint_instruction}
 
-5. **AVOID THESE**:
+5. **ENVIRONMENT & CONTEXT** (CRITICAL - Include ALL of these):
+   {environment}
+
+6. **AVOID THESE**:
    {negative_items}
 
 **OUTPUT**: Single photorealistic architectural photograph
@@ -207,15 +214,22 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             for m in materials[:3]
             if m.get('type')
         ]) or "context-appropriate materials"
-        
+
+        # ✅ FIX: Environment list - MUST INCLUDE for context (people, vehicles, time of day)
+        environment_list = ". ".join([
+            f"{e.get('type', '')}: {e.get('description', '')}"
+            for e in environment
+            if e.get('type') and e.get('description')
+        ]) or "urban context"
+
         # Negative items
         if negative_items is None:
             negative_items = DEFAULT_NEGATIVE_ITEMS
         negative_str = ", ".join(negative_items)
-        
+
         # Select template
         template = cls.RENDER_WITH_REFERENCE if has_reference else cls.RENDER_WITHOUT_REFERENCE
-        
+
         # Format prompt
         prompt = template.format(
             user_description=user_description,
@@ -224,6 +238,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             lens=lens,
             lighting=lighting,
             materials=materials_list,
+            environment=environment_list,  # ✅ ADD: Environment context
             negative_items=negative_str
         )
         

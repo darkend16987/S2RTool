@@ -81,9 +81,27 @@ class Translator:
         if missing:
             raise ValueError(f"Translation missing fields: {missing}")
         
-        # Check materials count
+        # ✅ FIX: Check materials count
         original_materials = len(original.get('materials_precise', []))
         translated_materials = len(translated.get('materials_precise', []))
-        
+
         if translated_materials < original_materials * 0.8:  # Allow 20% loss
             print(f"⚠️ Warning: Lost {original_materials - translated_materials} materials in translation")
+
+        # ✅ ADD: Check environment items count (CRITICAL for people, vehicles, time of day)
+        original_environment = len(original.get('environment', []))
+        translated_environment = len(translated.get('environment', []))
+
+        if translated_environment < original_environment:
+            lost_count = original_environment - translated_environment
+            print(f"⚠️ WARNING: Lost {lost_count} environment items in translation!")
+            print(f"   Original: {original_environment} items → Translated: {translated_environment} items")
+            print(f"   This may cause missing people, vehicles, or time-of-day context!")
+
+            # Log which items were lost
+            original_types = {e.get('type', 'Unknown') for e in original.get('environment', [])}
+            translated_types = {e.get('type', 'Unknown') for e in translated.get('environment', [])}
+            missing_types = original_types - translated_types
+
+            if missing_types:
+                print(f"   Missing types: {', '.join(missing_types)}")

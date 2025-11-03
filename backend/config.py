@@ -407,12 +407,21 @@ TRANSLATION RULES:
 5. Enhance material descriptions with texture/finish details
 6. Return ONLY valid JSON, no additional text
 
+CRITICAL REQUIREMENTS:
+⚠️ TRANSLATE **EVERY SINGLE ITEM** IN ARRAYS - DO NOT SKIP OR MERGE!
+   - If input has 7 environment items → output MUST have 7 environment items
+   - If input has 5 materials → output MUST have 5 materials
+   - Translate each item individually, preserving all user-specified details
+
 IMPORTANT:
 - Translate "Hiện đại" → "Modern"
 - Translate "Tân cổ điển" → "Neoclassical"
 - Translate "Đông Dương" → "Indochinese/French Colonial"
 - Add rendering terms: "photorealistic", "architectural visualization", "high detail"
-- Materials must include: base material + color + texture + finish"""
+- Materials must include: base material + color + texture + finish
+- **PEOPLE** (người, con người) → "people, pedestrians, human activity"
+- **VEHICLES** (xe cộ, xe ô tô, xe máy) → "vehicles, cars, motorcycles, traffic"
+- **TIME OF DAY** (thời điểm, buổi sáng, chiều tối) → translate accurately with atmospheric details"""
 
 # ============== Debug Info ==============
 if __name__ == "__main__":
