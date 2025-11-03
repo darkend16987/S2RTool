@@ -641,6 +641,38 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border: 1px solid var(--color-error);
 }
 
+.success-message {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+    animation: slideInDown 0.3s ease-out;
+}
+
+.success-message::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    margin-right: var(--spacing-sm);
+    font-weight: bold;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ============== SPINNER ============== */
 .spinner {
     width: 18px;

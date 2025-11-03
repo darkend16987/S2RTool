@@ -184,9 +184,12 @@ def generate_manifest(scanned_data: Dict) -> Dict:
     return manifest
 
 
-def merge_with_existing(new_manifest: Dict, existing_path: Path) -> Dict:
+def merge_with_existing(new_manifest: Dict, existing_path: Path, sync_mode: bool = False) -> Dict:
     """
     Merge new manifest with existing one (preserve manual edits)
+    
+    Args:
+        sync_mode: If True, remove entries for images that no longer exist
     """
     if not existing_path.exists():
         return new_manifest
@@ -194,28 +197,72 @@ def merge_with_existing(new_manifest: Dict, existing_path: Path) -> Dict:
     with open(existing_path, 'r', encoding='utf-8') as f:
         existing = json.load(f)
     
-    # Strategy: Keep existing entries, add new ones
-    for category, data in new_manifest["categories"].items():
-        if category in existing.get("categories", {}):
-            # Category exists, merge images
+    if sync_mode:
+        # ⭐ CHẾ ĐỘ SYNC: Xóa ảnh không tồn tại
+        print("  🔄 SYNC MODE: Removing non-existent images...")
+        
+        for category, data in list(existing.get("categories", {}).items()):
+            if category not in new_manifest["categories"]:
+                # Category không còn tồn tại → xóa
+                print(f"  ❌ Removed category: {category}")
+                del existing["categories"][category]
+                continue
+            
+            # Lấy danh sách ID ảnh hiện tại
+            new_image_ids = {img["id"] for img in new_manifest["categories"][category]["subcategory_main"]["images"]}
+            
+            # Lọc chỉ giữ ảnh còn tồn tại
             existing_images = existing["categories"][category].get("subcategory_main", {}).get("images", [])
-            new_images = data["subcategory_main"]["images"]
+            filtered_images = []
             
-            existing_ids = {img["id"] for img in existing_images}
+            for img in existing_images:
+                if img["id"] in new_image_ids:
+                    filtered_images.append(img)
+                else:
+                    print(f"  ❌ Removed: {img['id']} (file not found)")
             
-            # Add only new images
-            for new_img in new_images:
-                if new_img["id"] not in existing_ids:
-                    existing_images.append(new_img)
-                    print(f"  ➕ Added: {new_img['id']}")
-            
-            existing["categories"][category]["subcategory_main"]["images"] = existing_images
-        else:
-            # New category
-            existing["categories"][category] = data
-            print(f"  ➕ Added category: {category}")
+            existing["categories"][category]["subcategory_main"]["images"] = filtered_images
+        
+        # Thêm category và ảnh mới
+        for category, data in new_manifest["categories"].items():
+            if category not in existing["categories"]:
+                existing["categories"][category] = data
+                print(f"  ➕ Added category: {category}")
+            else:
+                # Thêm ảnh mới vào category đã tồn tại
+                existing_images = existing["categories"][category]["subcategory_main"]["images"]
+                existing_ids = {img["id"] for img in existing_images}
+                
+                for new_img in data["subcategory_main"]["images"]:
+                    if new_img["id"] not in existing_ids:
+                        existing_images.append(new_img)
+                        print(f"  ➕ Added: {new_img['id']}")
+        
+        return existing
     
-    return existing
+    else:
+        # ⭐ CHẾ ĐỘ MERGE: Chỉ thêm mới, không xóa
+        for category, data in new_manifest["categories"].items():
+            if category in existing.get("categories", {}):
+                # Category exists, merge images
+                existing_images = existing["categories"][category].get("subcategory_main", {}).get("images", [])
+                new_images = data["subcategory_main"]["images"]
+                
+                existing_ids = {img["id"] for img in existing_images}
+                
+                # Add only new images
+                for new_img in new_images:
+                    if new_img["id"] not in existing_ids:
+                        existing_images.append(new_img)
+                        print(f"  ➕ Added: {new_img['id']}")
+                
+                existing["categories"][category]["subcategory_main"]["images"] = existing_images
+            else:
+                # New category
+                existing["categories"][category] = data
+                print(f"  ➕ Added category: {category}")
+        
+        return existing
 
 
 # ============== MAIN ==============
@@ -225,6 +272,7 @@ def main():
     parser.add_argument('--scan', action='store_true', help='Scan and update manifest')
     parser.add_argument('--create', action='store_true', help='Create new manifest (overwrite)')
     parser.add_argument('--preview', action='store_true', help='Preview without saving')
+    parser.add_argument('--sync', action='store_true', help='Sync mode: remove images that no longer exist')
     
     args = parser.parse_args()
     
@@ -264,9 +312,12 @@ def main():
     if args.create:
         final_manifest = new_manifest
         print("⚠️  Creating NEW manifest (overwriting existing)")
+    elif args.sync:
+        print("🔄 SYNC mode: Will remove images that no longer exist...")
+        final_manifest = merge_with_existing(new_manifest, MANIFEST_PATH, sync_mode=True)
     else:
         print("🔄 Merging with existing manifest...")
-        final_manifest = merge_with_existing(new_manifest, MANIFEST_PATH)
+        final_manifest = merge_with_existing(new_manifest, MANIFEST_PATH, sync_mode=args.sync)
     
     # Save
     print(f"💾 Saving to: {MANIFEST_PATH}")

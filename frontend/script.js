@@ -1,7 +1,7 @@
 // ============================================
 // ARCHITECTURE S2R TOOL - Frontend JavaScript
-// Version: 3.0 - WITH REFERENCE IMAGE SUPPORT
-// Updated: 2025-11-01
+// Version: 3.1 - COMPLETE WITH ALL FIXES
+// Updated: 2025-11-03
 // ============================================
 
 // ============== CONFIG ==============
@@ -12,7 +12,8 @@ let currentSketchImage = null;
 let currentAnalysisData = null;
 let currentTranslatedData = null;
 let currentRenderedImage = null;
-let currentReferenceImage = null; // ⭐ NEW: Reference image storage
+let currentReferenceImage = null;
+let currentMaskImage = null; // ⭐ NEW: Mask for inpainting
 
 // ============== DOM ELEMENTS ==============
 const uploadSketch = document.getElementById('uploadSketch');
@@ -26,12 +27,13 @@ const viewpointSelect = document.getElementById('viewpoint');
 
 // ============== INIT ==============
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 S2R Tool v3.0 initialized');
+    console.log('🚀 S2R Tool v3.1 initialized');
     loadAspectRatios();
     setupEventListeners();
     setupDynamicContainers();
     setupExportButton();
-    setupReferenceImageUI(); // ⭐ NEW
+    setupReferenceImageUI();
+    setupInpaintingUI(); // ⭐ NEW: Setup inpainting
 });
 
 // ============== ASPECT RATIOS ==============
@@ -67,6 +69,20 @@ function setupEventListeners() {
     
     // Generate button
     generateButton.addEventListener('click', generateRender);
+    
+    // ⭐ NEW: Download button
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#downloadImageBtn')) {
+            handleDownloadImage();
+        }
+    });
+    
+    // ⭐ NEW: Regenerate button
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#regenerateBtn')) {
+            generateRender();
+        }
+    });
     
     // Range slider display
     const sketchAdherence = document.getElementById('sketch_adherence');
@@ -108,16 +124,15 @@ function handleImageUpload(event) {
 // ============== STEP 1: ANALYZE SKETCH ==============
 async function analyzeSketch() {
     if (!currentSketchImage) {
-        alert('Vui lòng upload ảnh sketch trước!');
+        showError('analyzeError', 'Vui lòng upload ảnh sketch trước!'); // ⭐ FIXED: No more alert()
         return;
     }
     
     showSpinner('analyzeSpinner', true);
     analyzeButton.disabled = true;
     hideError('analyzeError');
+    hideSuccess('analyzeSuccess');
     
-    // SỬA LỖI: Chúng ta sẽ cấu trúc lại toàn bộ khối try/catch
-    // để xử lý response một cách chính xác và chỉ đọc body 1 LẦN.
     try {
         console.log('📊 Analyzing sketch...');
         
@@ -129,32 +144,21 @@ async function analyzeSketch() {
             })
         });
         
-        // --- LOGIC SỬA LỖI BẮT ĐẦU ---
-
-        // Kiểm tra xem response có OK hay không *TRƯỚC KHI* đọc body
+        // Check response status
         if (!response.ok) {
-            // Nếu là lỗi (500, 404, 400, v.v.)
             let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
             try {
-                // Đọc body lỗi (ĐỌC LẦN 1)
                 const errorData = await response.json();
                 if (errorData && errorData.error) {
-                    errorMsg = errorData.error; // Lấy lỗi chi tiết từ backend
+                    errorMsg = errorData.error;
                 }
             } catch (jsonError) {
-                // Backend trả về lỗi 500 nhưng không phải JSON
                 console.warn("Could not parse error JSON from backend", jsonError);
             }
-            // Văng lỗi để nhảy xuống khối catch bên ngoài
             throw new Error(errorMsg);
         }
         
-        // Nếu chúng ta đến được đây, nghĩa là response.ok == true (200)
-        // Đọc body thành công (ĐỌC LẦN 1)
         currentAnalysisData = await response.json();
-
-        // --- LOGIC SỬA LỖI KẾT THÚC ---
-
         console.log('✅ Analysis complete:', currentAnalysisData);
         
         // Auto-fill form với dữ liệu phân tích
@@ -163,13 +167,11 @@ async function analyzeSketch() {
         // Tự động translate
         await translatePrompt();
         
-        alert('Phân tích thành công! Vui lòng kiểm tra và chỉnh sửa thông số.');
+        showSuccess('analyzeSuccess', '✨ Phân tích thành công! Vui lòng kiểm tra và chỉnh sửa thông số.'); // ⭐ FIXED: No more alert()
         
     } catch (error) {
         console.error('❌ Analysis failed:', error);
-        // Khối catch này bây giờ sẽ bắt cả lỗi mạng VÀ lỗi 500 mà chúng ta đã văng ra
         showError('analyzeError', `Lỗi phân tích: ${error.message}`);
-
     } finally {
         showSpinner('analyzeSpinner', false);
         analyzeButton.disabled = false;
@@ -178,9 +180,13 @@ async function analyzeSketch() {
 
 // ============== FILL FORM FROM ANALYSIS ==============
 function fillFormFromAnalysis(data) {
-    // Main description
-    document.getElementById('main_description').value = 
-        `${data.building_type || ''} - ${data.facade_style || ''}`;
+    // ⭐ FIXED: Main description - CHỈ building type
+    document.getElementById('main_description').value = data.building_type || '';
+    
+    // ⭐ FIXED: Facade style - RIÊNG BIỆT
+    if (document.getElementById('facade_style')) {
+        document.getElementById('facade_style').value = data.facade_style || '';
+    }
     
     // Critical elements
     const criticalContainer = document.getElementById('criticalElementsContainer');
@@ -254,7 +260,7 @@ async function translatePrompt() {
 function collectFormData() {
     const data = {
         building_type: document.getElementById('main_description').value,
-        facade_style: document.getElementById('main_description').value,
+        facade_style: document.getElementById('facade_style').value, // ⭐ ALREADY FIXED
         sketch_detail_level: currentAnalysisData?.sketch_detail_level || 'intermediate',
         is_colored: currentAnalysisData?.is_colored || false,
         critical_elements: [],
@@ -299,59 +305,54 @@ function collectFormData() {
 }
 
 // ============== STEP 3: GENERATE RENDER ==============
-
 async function generateRender() {
-    if (!currentSketchImage || !currentTranslatedData) {
-        alert('Vui lòng hoàn thành phân tích trước!');
+    if (!currentTranslatedData) {
+        showError('renderError', 'Vui lòng hoàn thành phân tích trước!'); // ⭐ FIXED: No more alert()
         return;
     }
     
     showSpinner('renderSpinner', true);
     generateButton.disabled = true;
     hideError('renderError');
+    hideSuccess('renderSuccess');
     
     try {
         console.log('🎨 Generating render...');
         
-        // ✅ FIX: Collect CURRENT form data (with user edits)
-        const formDataVi = collectFormData();
-        
-        // ⭐ Build request body with optional reference
-        const requestBody = {
-            image_base64: currentSketchImage,
-            form_data_vi: formDataVi,  // ✅ CHANGED: Send current form data
-            aspect_ratio: aspectRatioSelect.value,
-            viewpoint: viewpointSelect.value
+        const requestData = {
+            sketch_image: currentSketchImage,
+            translated_data_en: currentTranslatedData,
+            viewpoint: viewpointSelect.value,
+            aspect_ratio: aspectRatioSelect.value
         };
         
-        // ⭐ Add reference image if selected
+        // Include reference image if available
         if (currentReferenceImage) {
-            requestBody.reference_image_base64 = currentReferenceImage;
+            requestData.reference_image = currentReferenceImage;
             console.log('📎 Using reference image for style consistency');
         }
-        
-        console.log('📤 Sending form_data_vi (with user edits)');
         
         const response = await fetch(`${API_BASE_URL}/render`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Render failed');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Render failed');
         }
         
         const result = await response.json();
-        currentRenderedImage = result.generated_image_base64;
         
+        // Store the result
+        currentRenderedImage = result.rendered_image;
+        
+        // Display the image
+        displayRenderedImage(result.rendered_image, result.mime_type);
+        
+        showSuccess('renderSuccess', '🎉 Render hoàn tất! Bạn có thể tải ảnh xuống bên dưới.'); // ⭐ NEW: Success message
         console.log('✅ Render complete');
-        
-        // Display result
-        displayRenderedImage(currentRenderedImage, result.mime_type);
-        
-        alert('Render thành công! ✨');
         
     } catch (error) {
         console.error('❌ Render failed:', error);
@@ -377,93 +378,121 @@ function displayRenderedImage(base64Data, mimeType) {
     
     // Show output controls
     document.getElementById('outputControls').classList.remove('hidden');
+    
+    // Add "Use as Reference" button if not exists
+    addUseAsReferenceButton();
 }
 
-// ============== DYNAMIC ITEMS (Elements, Materials, Environment) ==============
-function addDynamicItem(container, type, typeValue = '', descValue = '') {
-    const div = document.createElement('div');
-    div.className = 'dynamic-item';
+// ⭐ NEW: DOWNLOAD IMAGE HANDLER
+function handleDownloadImage() {
+    if (!currentRenderedImage) {
+        showError('renderError', 'Chưa có ảnh để tải về!');
+        return;
+    }
     
-    const typePlaceholder = type === 'element' ? 'VD: Cửa sổ' : 
-                            type === 'material' ? 'VD: Tường' : 'VD: Cây xanh';
-    const descPlaceholder = type === 'element' ? 'Mô tả chi tiết' : 
-                             type === 'material' ? 'Bê tông xám sáng' : 'Nhiều cây xanh';
+    try {
+        // Convert base64 to blob
+        const byteString = atob(currentRenderedImage);
+        const mimeString = 'image/png';
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([ab], { type: mimeString });
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `s2r-render-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showSuccess('renderSuccess', '✅ Ảnh đã được tải xuống!');
+        console.log('✅ Image downloaded');
+        
+    } catch (error) {
+        console.error('❌ Download failed:', error);
+        showError('renderError', 'Lỗi khi tải ảnh. Vui lòng thử lại.');
+    }
+}
+
+// ============== DYNAMIC ITEMS (FORM) ==============
+function setupDynamicContainers() {
+    // Initialize empty containers
+    console.log('🔧 Dynamic containers ready');
+}
+
+function addDynamicItem(container, type, typeValue = '', descriptionValue = '') {
+    const item = document.createElement('div');
+    item.className = 'dynamic-item';
     
-    div.innerHTML = `
-        <input type="text" class="item-type" placeholder="${typePlaceholder}" value="${typeValue}">
-        <input type="text" class="item-description" placeholder="${descPlaceholder}" value="${descValue}">
-        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+    const typeLabel = type === 'element' ? 'Loại' : type === 'material' ? 'Vật liệu' : 'Bối cảnh';
+    
+    item.innerHTML = `
+        <input type="text" class="item-type" placeholder="${typeLabel}" value="${typeValue}">
+        <input type="text" class="item-description" placeholder="Mô tả chi tiết" value="${descriptionValue}">
+        <button type="button" class="btn-remove">×</button>
     `;
     
-    container.appendChild(div);
-}
-
-function setupDynamicContainers() {
-    // Initialize với 1 item mỗi container
-    const criticalContainer = document.getElementById('criticalElementsContainer');
-    const materialsContainer = document.getElementById('materialsPreciseContainer');
-    const envContainer = document.getElementById('environmentContainer');
+    // Remove button handler
+    item.querySelector('.btn-remove').addEventListener('click', () => {
+        item.remove();
+    });
     
-    if (criticalContainer.children.length === 0) {
-        addDynamicItem(criticalContainer, 'element');
-    }
-    if (materialsContainer.children.length === 0) {
-        addDynamicItem(materialsContainer, 'material');
-    }
-    if (envContainer.children.length === 0) {
-        addDynamicItem(envContainer, 'setting');
-    }
+    container.appendChild(item);
 }
 
-// ============== ⭐ NEW: REFERENCE IMAGE SYSTEM ==============
-
+// ============== REFERENCE IMAGE FEATURE ==============
 function setupReferenceImageUI() {
-    // Create reference image section in form
-    const formPanel = document.querySelector('.panel-form form');
+    const formPanel = document.querySelector('.panel-form');
     
+    // Create reference section
     const referenceSection = document.createElement('details');
     referenceSection.className = 'form-section';
     referenceSection.id = 'referenceSection';
     referenceSection.innerHTML = `
         <summary>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-            Ảnh Tham Khảo (Reference) ⭐
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+            📸 Ảnh tham khảo (Reference Image)
         </summary>
         <div class="section-content">
             <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1rem;">
                 Sử dụng ảnh tham khảo để giữ style/màu sắc nhất quán khi render góc khác hoặc phiên bản mới.
             </p>
             
-            <!-- Reference Preview -->
-            <div id="referencePreview" class="reference-preview hidden">
-                <img id="referencePreviewImage" src="" alt="Reference">
-                <button type="button" id="clearReferenceBtn" class="btn-remove">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            </div>
-            
-            <!-- Upload Reference -->
             <div class="form-group">
-                <label for="uploadReference">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload từ máy tính
-                </label>
+                <button type="button" id="chooseFromLibraryBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="M20.4 14.5L16 10 4 20"/>
+                    </svg>
+                    Chọn từ thư viện
+                </button>
+                
                 <input type="file" id="uploadReference" accept="image/*" style="display: none;">
-                <button type="button" id="uploadReferenceBtn" class="btn-secondary">
-                    Chọn ảnh Reference
-                </button>
+                <label for="uploadReference" class="btn-secondary" style="width: 100%; display: inline-block; text-align: center; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload ảnh riêng
+                </label>
             </div>
             
-            <!-- Browse Library -->
-            <div class="form-group">
-                <label>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M20.4 14.5L16 10 4 20"/></svg>
-                    Hoặc chọn từ thư viện
-                </label>
-                <button type="button" id="browseLibraryBtn" class="btn-secondary">
-                    Duyệt Reference Library
+            <div id="referencePreview" class="hidden" style="margin-top: 1rem;">
+                <img id="referencePreviewImage" src="" alt="Reference preview" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                <button type="button" id="clearReferenceBtn" class="btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+                    Xóa reference
                 </button>
             </div>
         </div>
@@ -477,17 +506,21 @@ function setupReferenceImageUI() {
     if (styleSection) {
         formPanel.insertBefore(referenceSection, styleSection);
     } else {
-        formPanel.appendChild(referenceSection);
+        formPanel.querySelector('form').appendChild(referenceSection);
     }
     
-    // Setup event listeners
-    document.getElementById('uploadReferenceBtn').addEventListener('click', () => {
-        document.getElementById('uploadReference').click();
-    });
-    
+    // Event listeners
+    document.getElementById('chooseFromLibraryBtn').addEventListener('click', openReferenceLibrary);
     document.getElementById('uploadReference').addEventListener('change', handleReferenceUpload);
-    document.getElementById('browseLibraryBtn').addEventListener('click', openReferenceLibrary);
-    document.getElementById('clearReferenceBtn')?.addEventListener('click', clearReference);
+    
+    const clearBtn = document.getElementById('clearReferenceBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            currentReferenceImage = null;
+            document.getElementById('referencePreview').classList.add('hidden');
+            console.log('🗑️ Reference cleared');
+        });
+    }
 }
 
 function handleReferenceUpload(event) {
@@ -498,60 +531,45 @@ function handleReferenceUpload(event) {
     reader.onload = (e) => {
         currentReferenceImage = e.target.result;
         showReferencePreview(e.target.result);
-        console.log('✅ Reference image uploaded');
-        alert('Đã tải ảnh reference! Render tiếp sẽ giữ style từ ảnh này.');
+        
+        console.log('✅ Reference uploaded');
+        showSuccess('renderSuccess', '✅ Đã tải ảnh reference! Render tiếp sẽ giữ style từ ảnh này.'); // ⭐ FIXED: No more alert()
     };
     reader.readAsDataURL(file);
 }
 
-function showReferencePreview(imageSrc) {
+function showReferencePreview(imageData) {
     const preview = document.getElementById('referencePreview');
-    const img = document.getElementById('referencePreviewImage');
+    const previewImg = document.getElementById('referencePreviewImage');
     
-    img.src = imageSrc;
+    previewImg.src = imageData;
     preview.classList.remove('hidden');
-}
-
-function clearReference() {
-    currentReferenceImage = null;
-    document.getElementById('referencePreview').classList.add('hidden');
-    document.getElementById('uploadReference').value = '';
-    console.log('🗑️ Reference cleared');
 }
 
 async function openReferenceLibrary() {
     try {
-        // Fetch available references
-        const response = await fetch(`${API_BASE_URL}/references/list`);
-        
-        if (!response.ok) {
-            throw new Error('Failed to load library');
-        }
-        
+        const response = await fetch(`${API_BASE_URL}/references/categories`);
         const data = await response.json();
         
-        if (data.categories) {
-            // Show category selection
-            showCategoryPicker(data.categories);
-        } else if (data.images) {
-            // Show images directly
-            showReferencePicker(data.images);
+        if (!data.categories || data.categories.length === 0) {
+            showError('renderError', 'Không thể tải thư viện reference. Vui lòng kiểm tra backend.'); // ⭐ FIXED: No more alert()
+            return;
         }
         
+        showCategoryPicker(data.categories);
     } catch (error) {
-        console.error('❌ Library load failed:', error);
-        alert('Không thể tải thư viện reference. Vui lòng kiểm tra backend.');
+        console.error('❌ Failed to load reference library:', error);
+        showError('renderError', 'Không thể tải thư viện reference. Vui lòng kiểm tra backend.'); // ⭐ FIXED: No more alert()
     }
 }
 
 function showCategoryPicker(categories) {
-    // Create modal overlay
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Chọn Danh Mục Reference</h3>
+                <h3>Chọn danh mục</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
@@ -648,11 +666,11 @@ async function selectReferenceFromLibrary(imageId) {
         showReferencePreview(currentReferenceImage);
         
         console.log('✅ Reference selected from library:', imageId);
-        alert('Đã chọn reference từ thư viện!');
+        showSuccess('renderSuccess', '✅ Đã chọn reference từ thư viện!'); // ⭐ FIXED: No more alert()
         
     } catch (error) {
         console.error('❌ Reference download failed:', error);
-        alert('Không thể tải ảnh reference. Vui lòng thử lại.');
+        showError('renderError', 'Không thể tải ảnh reference. Vui lòng thử lại.');
     }
 }
 
@@ -676,7 +694,7 @@ function addUseAsReferenceButton() {
     
     btn.addEventListener('click', () => {
         if (!currentRenderedImage) {
-            alert('Chưa có ảnh render!');
+            showError('renderError', 'Chưa có ảnh render!');
             return;
         }
         
@@ -684,19 +702,128 @@ function addUseAsReferenceButton() {
         showReferencePreview(currentReferenceImage);
         
         // Open reference section
-        document.getElementById('referenceSection').setAttribute('open', '');
+        const refSection = document.getElementById('referenceSection');
+        if (refSection) {
+            refSection.setAttribute('open', '');
+        }
         
-        alert('✅ Đã lưu ảnh này làm reference!\nRender tiếp sẽ giữ style từ ảnh này.');
+        showSuccess('renderSuccess', '✅ Đã lưu ảnh này làm reference! Render tiếp sẽ giữ style từ ảnh này.');
         console.log('📎 Current render saved as reference');
     });
     
     controls.appendChild(btn);
 }
 
-// Call this after displaying rendered image
-function displayRenderedImageWithControls(base64Data, mimeType) {
-    displayRenderedImage(base64Data, mimeType);
-    addUseAsReferenceButton(); // ⭐ Add the button
+// ============== INPAINTING FEATURE ==============
+function setupInpaintingUI() {
+    const uploadMask = document.getElementById('uploadMask');
+    const applyInpaintBtn = document.getElementById('applyInpaintBtn');
+    
+    if (!uploadMask || !applyInpaintBtn) return;
+    
+    // Upload mask handler
+    uploadMask.addEventListener('change', handleMaskUpload);
+    
+    // Apply inpaint handler
+    applyInpaintBtn.addEventListener('click', applyInpainting);
+}
+
+function handleMaskUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        currentMaskImage = e.target.result;
+        
+        // Show preview
+        const previewImg = document.getElementById('maskPreviewImage');
+        const previewDiv = document.getElementById('maskPreview');
+        previewImg.src = e.target.result;
+        previewDiv.classList.remove('hidden');
+        
+        // Enable apply button if we have both mask and rendered image
+        const applyBtn = document.getElementById('applyInpaintBtn');
+        if (currentRenderedImage) {
+            applyBtn.disabled = false;
+        }
+        
+        console.log('✅ Mask image uploaded');
+    };
+    reader.readAsDataURL(file);
+}
+
+async function applyInpainting() {
+    if (!currentRenderedImage) {
+        showError('renderError', 'Chưa có ảnh render gốc!');
+        return;
+    }
+    
+    if (!currentMaskImage) {
+        showError('renderError', 'Chưa upload mask image!');
+        return;
+    }
+    
+    const instruction = document.getElementById('inpaintInstruction').value.trim();
+    if (!instruction) {
+        showError('renderError', 'Vui lòng mô tả thay đổi cần thực hiện!');
+        return;
+    }
+    
+    try {
+        console.log('🎨 Starting inpainting...');
+        
+        // Show loading
+        const applyBtn = document.getElementById('applyInpaintBtn');
+        applyBtn.disabled = true;
+        applyBtn.innerHTML = '<span class="spinner"></span> Đang xử lý...';
+        
+        hideError('renderError');
+        hideSuccess('renderSuccess');
+        
+        const response = await fetch(`${API_BASE_URL}/inpaint`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                source_image_base64: `data:image/png;base64,${currentRenderedImage}`,  // ← Đổi tên
+                mask_image_base64: currentMaskImage,                                     // ← Đổi tên
+                edit_instruction: instruction,
+                reference_image_base64: currentReferenceImage                            // ← Đổi tên
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Inpainting failed');
+        }
+        
+        const data = await response.json();
+        
+        // Display result (replace current render)
+        currentRenderedImage = data.edited_image;
+        displayRenderedImage(data.edited_image, data.mime_type);
+        
+        showSuccess('renderSuccess', '✨ Inpainting hoàn tất! Ảnh đã được chỉnh sửa.');
+        console.log('✅ Inpainting complete');
+        
+        // Reset inpaint form
+        document.getElementById('inpaintInstruction').value = '';
+        
+    } catch (error) {
+        console.error('❌ Inpainting failed:', error);
+        showError('renderError', `Lỗi inpainting: ${error.message}`);
+    } finally {
+        // Restore button
+        const applyBtn = document.getElementById('applyInpaintBtn');
+        applyBtn.disabled = !currentMaskImage;
+        applyBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            Áp dụng Inpainting
+        `;
+    }
 }
 
 // ============== EXPORT JSON ==============
@@ -717,7 +844,7 @@ function setupExportButton() {
 
 function exportToJSON() {
     if (!currentTranslatedData) {
-        alert('Chưa có dữ liệu để export! Vui lòng phân tích sketch trước.');
+        showError('renderError', 'Chưa có dữ liệu để export! Vui lòng phân tích sketch trước.');
         return;
     }
     
@@ -728,7 +855,7 @@ function exportToJSON() {
         },
         form_data_vi: collectFormData(),
         translated_data_en: currentTranslatedData,
-        reference_image: currentReferenceImage ? 'included' : 'none', // ⭐ Include ref status
+        reference_image: currentReferenceImage ? 'included' : 'none',
         settings: {
             aspect_ratio: aspectRatioSelect.value,
             viewpoint: viewpointSelect.value,
@@ -772,5 +899,26 @@ function hideError(id) {
     }
 }
 
+// ⭐ NEW: Success message functions
+function showSuccess(id, message) {
+    const successDiv = document.getElementById(id);
+    if (successDiv) {
+        successDiv.textContent = message;
+        successDiv.classList.remove('hidden');
+        
+        // Auto-hide sau 4 giây
+        setTimeout(() => {
+            successDiv.classList.add('hidden');
+        }, 4000);
+    }
+}
+
+function hideSuccess(id) {
+    const successDiv = document.getElementById(id);
+    if (successDiv) {
+        successDiv.classList.add('hidden');
+    }
+}
+
 // ============== END ==============
-console.log('📦 Script v3.0 loaded successfully - Reference Image support enabled! 🎉');
+console.log('📦 Script v3.1 loaded successfully - All fixes applied! 🎉');
