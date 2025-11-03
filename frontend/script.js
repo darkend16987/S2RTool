@@ -306,54 +306,64 @@ function collectFormData() {
 
 // ============== STEP 3: GENERATE RENDER ==============
 async function generateRender() {
-    if (!currentTranslatedData) {
-        showError('renderError', 'Vui lòng hoàn thành phân tích trước!'); // ⭐ FIXED: No more alert()
+    if (!currentSketchImage) {
+        showError('renderError', 'Vui lòng upload sketch trước!');
         return;
     }
-    
+
     showSpinner('renderSpinner', true);
     generateButton.disabled = true;
     hideError('renderError');
     hideSuccess('renderSuccess');
-    
+
     try {
         console.log('🎨 Generating render...');
-        
+
+        // ✅ FIX: Collect FRESH form_data_vi with user edits
+        const form_data_vi = collectFormData();
+
+        console.log('📝 Sending form_data_vi with user edits:');
+        console.log('   - Building type:', form_data_vi.building_type);
+        console.log('   - Facade style:', form_data_vi.facade_style);
+        console.log('   - Environment items:', form_data_vi.environment.length);
+        console.log('   - Lighting:', form_data_vi.technical_specs.lighting);
+
+        // ✅ FIX: Correct field names matching backend expectations
         const requestData = {
-            sketch_image: currentSketchImage,
-            translated_data_en: currentTranslatedData,
-            viewpoint: viewpointSelect.value,
-            aspect_ratio: aspectRatioSelect.value
+            image_base64: currentSketchImage,       // ✅ FIXED: Was "sketch_image"
+            form_data_vi: form_data_vi,             // ✅ FIXED: Was "translated_data_en" (old data)
+            aspect_ratio: aspectRatioSelect.value,
+            viewpoint: viewpointSelect.value
         };
-        
+
         // Include reference image if available
         if (currentReferenceImage) {
-            requestData.reference_image = currentReferenceImage;
+            requestData.reference_image_base64 = currentReferenceImage;  // ✅ FIXED: Was "reference_image"
             console.log('📎 Using reference image for style consistency');
         }
-        
+
         const response = await fetch(`${API_BASE_URL}/render`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestData)
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Render failed');
         }
-        
+
         const result = await response.json();
-        
-        // Store the result
-        currentRenderedImage = result.rendered_image;
-        
+
+        // ✅ FIX: Backend returns "generated_image_base64", not "rendered_image"
+        currentRenderedImage = result.generated_image_base64;
+
         // Display the image
-        displayRenderedImage(result.rendered_image, result.mime_type);
-        
-        showSuccess('renderSuccess', '🎉 Render hoàn tất! Bạn có thể tải ảnh xuống bên dưới.'); // ⭐ NEW: Success message
+        displayRenderedImage(result.generated_image_base64, result.mime_type);
+
+        showSuccess('renderSuccess', '🎉 Render hoàn tất! Bạn có thể tải ảnh xuống bên dưới.');
         console.log('✅ Render complete');
-        
+
     } catch (error) {
         console.error('❌ Render failed:', error);
         showError('renderError', `Lỗi render: ${error.message}`);
@@ -548,7 +558,8 @@ function showReferencePreview(imageData) {
 
 async function openReferenceLibrary() {
     try {
-        const response = await fetch(`${API_BASE_URL}/references/categories`);
+        // ✅ FIX: Backend /references/list without params returns categories
+        const response = await fetch(`${API_BASE_URL}/references/list`);
         const data = await response.json();
         
         if (!data.categories || data.categories.length === 0) {
