@@ -330,10 +330,10 @@ OUTPUT FORMAT (JSON):
         }
     ],
     "technical_specs": {
-        "camera": "Góc chụp (VD: Góc thẳng, Góc 3/4...)",
-        "lens": "Ống kính phù hợp (VD: 24mm wide, 50mm standard...)",
+        "camera": "Máy ảnh khuyến nghị (VD: Canon EOS 5D Mark IV, Nikon D850...)",
+        "lens": "Ống kính phù hợp (VD: 24mm wide-angle, 50mm standard...)",
         "perspective": "Phối cảnh (VD: 1 điểm tụ, 2 điểm tụ...)",
-        "lighting": "Ánh sáng (VD: Ánh sáng tự nhiên ban ngày, Hoàng hôn...)"
+        "lighting": "Ánh sáng (VD: Ánh sáng tự nhiên ban ngày, hoàng hôn, giờ vàng...)"
     }
 }
 

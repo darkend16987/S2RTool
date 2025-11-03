@@ -85,11 +85,19 @@ def render_image():
         
         # Build prompt from FRESH translation (with user edits!)
         viewpoint = data.get('viewpoint', 'main_facade')
-        
+        aspect_ratio = data.get('aspect_ratio', '16:9')
+
+        # ✅ FIX: Extract sketch_adherence from form_data_vi (user-controlled!)
+        sketch_adherence = form_data_vi.get('sketch_adherence', 0.95)
+
+        print(f"🎯 Geometry control: sketch_adherence={sketch_adherence}, aspect_ratio={aspect_ratio}")
+
         prompt, negative_prompt = prompt_builder.build_render_prompt(
             translated_data_en=translated_data_en,
             viewpoint=viewpoint,
-            has_reference=(reference_pil is not None)
+            has_reference=(reference_pil is not None),
+            sketch_adherence=sketch_adherence,
+            aspect_ratio=aspect_ratio
         )
         
         print(f"📝 Prompt preview (first 200 chars):")

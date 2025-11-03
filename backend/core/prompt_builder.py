@@ -22,11 +22,15 @@ You are given TWO images in this exact order:
 
 **YOUR TASK - Follow these rules STRICTLY**:
 
-1. **PRESERVE GEOMETRY** (Priority 1):
-   ✓ Maintain EXACT proportions from sketch (±2% tolerance)
-   ✓ Keep ALL window/door positions unchanged
-   ✓ Preserve overall building silhouette perfectly
+1. **PRESERVE GEOMETRY** (Priority 1 - ABSOLUTE REQUIREMENT):
+   ⚠️ SKETCH ADHERENCE LEVEL: {sketch_adherence} (0.5=flexible, 1.0=pixel-perfect)
+   ✓ Maintain EXACT proportions from sketch (±2% tolerance maximum)
+   ✓ Keep ALL window/door positions UNCHANGED
+   ✓ Preserve overall building silhouette PERFECTLY
+   ✓ White padding around sketch is TECHNICAL ARTIFACT - ignore it, do NOT extend building into it
    ✗ DO NOT copy building shapes from reference image
+   ✗ DO NOT alter building width/height ratios
+   ✗ DO NOT change structural proportions to "improve" composition
 
 2. **ADOPT STYLE** (Priority 2):
    ✓ Study reference lighting conditions carefully
@@ -40,25 +44,31 @@ You are given TWO images in this exact order:
    ✓ Apply subtle weathering and imperfections
    ✓ Ensure materials look tangible
 
-4. **USER'S SPECIFIC REQUEST**:
+4. **OUTPUT FORMAT**:
+   ✓ Aspect ratio: {aspect_ratio}
+   ✓ Single photorealistic image
+   ✗ No text, watermarks, or overlays
+
+5. **USER'S SPECIFIC REQUEST**:
    {user_description}
 
-5. **VIEWPOINT SPECIFICATION**:
+6. **VIEWPOINT SPECIFICATION** (CAMERA ANGLE):
    {viewpoint_instruction}
+   ⚠️ This viewpoint overrides any camera angle mentioned in technical specs below
 
-6. **TECHNICAL SPECIFICATIONS**:
+7. **TECHNICAL SPECIFICATIONS**:
    Camera: {camera}
    Lens: {lens}
    Lighting: {lighting}
    Materials: {materials}
 
-7. **ENVIRONMENT & CONTEXT** (CRITICAL - Include ALL of these):
+8. **ENVIRONMENT & CONTEXT** (CRITICAL - Include ALL of these):
    {environment}
 
-8. **CRITICAL EXCLUSIONS** - DO NOT include any of these:
+9. **CRITICAL EXCLUSIONS** - DO NOT include any of these:
    {negative_items}
 
-**OUTPUT**: Single photorealistic architectural photograph, no text/watermarks
+**OUTPUT**: Single photorealistic architectural photograph matching {aspect_ratio} aspect ratio, no text/watermarks
 """
 
     RENDER_WITHOUT_REFERENCE = """
@@ -68,10 +78,14 @@ You are given TWO images in this exact order:
 
 **YOUR TASK**:
 
-1. **PRESERVE STRUCTURE**:
-   ✓ Maintain exact proportions from sketch (±2%)
-   ✓ Keep all architectural elements in positions
+1. **PRESERVE STRUCTURE** (ABSOLUTE REQUIREMENT):
+   ⚠️ SKETCH ADHERENCE LEVEL: {sketch_adherence} (0.5=flexible, 1.0=pixel-perfect)
+   ✓ Maintain exact proportions from sketch (±2% maximum)
+   ✓ Keep all architectural elements in exact positions
+   ✓ White padding around sketch is TECHNICAL ARTIFACT - ignore it, do NOT extend building into it
    ✗ Do not add/remove major features
+   ✗ Do NOT alter building width/height ratios
+   ✗ Do NOT change structural proportions to fill frame
 
 2. **ADD REALISM**:
    ✓ Infer realistic materials based on building type
@@ -79,23 +93,31 @@ You are given TWO images in this exact order:
    ✓ Add appropriate context (trees, sky, ground)
    ✓ Include human scale reference if suitable
 
-3. **USER'S REQUEST**:
+3. **OUTPUT FORMAT**:
+   ✓ Aspect ratio: {aspect_ratio}
+   ✓ Single photorealistic image
+   ✗ No text, watermarks, or overlays
+
+4. **USER'S REQUEST**:
    {user_description}
 
-4. **TECHNICAL SPECS**:
+5. **VIEWPOINT SPECIFICATION** (CAMERA ANGLE):
+   {viewpoint_instruction}
+   ⚠️ This viewpoint overrides any camera angle mentioned in technical specs below
+
+6. **TECHNICAL SPECS**:
    Camera: {camera}
    Lens: {lens}
    Lighting: {lighting}
    Materials: {materials}
-   Viewpoint: {viewpoint_instruction}
 
-5. **ENVIRONMENT & CONTEXT** (CRITICAL - Include ALL of these):
+7. **ENVIRONMENT & CONTEXT** (CRITICAL - Include ALL of these):
    {environment}
 
-6. **AVOID THESE**:
+8. **AVOID THESE**:
    {negative_items}
 
-**OUTPUT**: Single photorealistic architectural photograph
+**OUTPUT**: Single photorealistic architectural photograph matching {aspect_ratio} aspect ratio
 Style: Professional architectural photography (ArchDaily quality)
 """
 
@@ -170,17 +192,21 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         translated_data_en: Dict,
         viewpoint: str = "main_facade",
         has_reference: bool = False,
-        negative_items: Optional[List[str]] = None
+        negative_items: Optional[List[str]] = None,
+        sketch_adherence: float = 0.95,
+        aspect_ratio: str = "16:9"
     ) -> Tuple[str, str]:
         """
         Build optimized render prompt
-        
+
         Args:
             translated_data_en: English structured data
             viewpoint: Camera viewpoint key
             has_reference: Whether reference image is provided
             negative_items: Custom negative items (optional)
-        
+            sketch_adherence: How strictly to follow sketch (0.5-1.0, default 0.95)
+            aspect_ratio: Target aspect ratio (e.g., "16:9")
+
         Returns:
             (prompt, negative_prompt_summary)
         """
@@ -230,18 +256,23 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         # Select template
         template = cls.RENDER_WITH_REFERENCE if has_reference else cls.RENDER_WITHOUT_REFERENCE
 
+        # ✅ FIX: Convert sketch_adherence to percentage for clarity in prompt
+        adherence_display = f"{sketch_adherence:.2f}"
+
         # Format prompt
         prompt = template.format(
+            sketch_adherence=adherence_display,
+            aspect_ratio=aspect_ratio,
             user_description=user_description,
             viewpoint_instruction=viewpoint_instruction,
             camera=camera,
             lens=lens,
             lighting=lighting,
             materials=materials_list,
-            environment=environment_list,  # ✅ ADD: Environment context
+            environment=environment_list,
             negative_items=negative_str
         )
-        
+
         return prompt, negative_str
     
     @classmethod
