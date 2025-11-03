@@ -460,8 +460,14 @@ function addDynamicItem(container, type, typeValue = '', descriptionValue = '') 
 
 // ============== REFERENCE IMAGE FEATURE ==============
 function setupReferenceImageUI() {
-    const formPanel = document.querySelector('.panel-form');
-    
+    console.log('🔧 Setting up Reference Image UI...');
+
+    const formElement = document.getElementById('renderPromptForm');
+    if (!formElement) {
+        console.error('❌ Form element not found!');
+        return;
+    }
+
     // Create reference section
     const referenceSection = document.createElement('details');
     referenceSection.className = 'form-section';
@@ -477,7 +483,7 @@ function setupReferenceImageUI() {
             <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1rem;">
                 Sử dụng ảnh tham khảo để giữ style/màu sắc nhất quán khi render góc khác hoặc phiên bản mới.
             </p>
-            
+
             <div class="form-group">
                 <button type="button" id="chooseFromLibraryBtn" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -487,7 +493,7 @@ function setupReferenceImageUI() {
                     </svg>
                     Chọn từ thư viện
                 </button>
-                
+
                 <input type="file" id="uploadReference" accept="image/*" style="display: none;">
                 <label for="uploadReference" class="btn-secondary" style="width: 100%; display: inline-block; text-align: center; cursor: pointer;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -498,7 +504,7 @@ function setupReferenceImageUI() {
                     Upload ảnh riêng
                 </label>
             </div>
-            
+
             <div id="referencePreview" class="hidden" style="margin-top: 1rem;">
                 <img id="referencePreviewImage" src="" alt="Reference preview" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
                 <button type="button" id="clearReferenceBtn" class="btn-secondary" style="width: 100%; margin-top: 0.5rem;">
@@ -507,22 +513,27 @@ function setupReferenceImageUI() {
             </div>
         </div>
     `;
-    
-    // Insert before style keywords section
-    const styleSection = Array.from(formPanel.querySelectorAll('.form-section')).find(
+
+    // ✅ FIX: Insert into form, not panel
+    // Find style keywords section to insert before it
+    const styleSection = Array.from(formElement.querySelectorAll('.form-section')).find(
         section => section.textContent.includes('Từ khóa Phong cách')
     );
-    
+
     if (styleSection) {
-        formPanel.insertBefore(referenceSection, styleSection);
+        console.log('✅ Found style section, inserting reference section before it');
+        formElement.insertBefore(referenceSection, styleSection);
     } else {
-        formPanel.querySelector('form').appendChild(referenceSection);
+        console.log('⚠️  Style section not found, appending to end of form');
+        formElement.appendChild(referenceSection);
     }
-    
+
+    console.log('✅ Reference section inserted into DOM');
+
     // Event listeners
     document.getElementById('chooseFromLibraryBtn').addEventListener('click', openReferenceLibrary);
     document.getElementById('uploadReference').addEventListener('change', handleReferenceUpload);
-    
+
     const clearBtn = document.getElementById('clearReferenceBtn');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
@@ -531,6 +542,8 @@ function setupReferenceImageUI() {
             console.log('🗑️ Reference cleared');
         });
     }
+
+    console.log('✅ Reference Image UI setup complete!');
 }
 
 function handleReferenceUpload(event) {
