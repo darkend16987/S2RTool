@@ -38,10 +38,10 @@ docker-compose ps
 
 ### Step 3: Access the Application
 
-- **Frontend:** http://localhost:3000
+- **Frontend:** http://localhost:3001
 - **Backend API:** http://localhost:5001
 - **Health Check:**
-  - Frontend: http://localhost:3000/health
+  - Frontend: http://localhost:3001/health
   - Backend: http://localhost:5001/health
 
 ---
@@ -57,7 +57,7 @@ docker-compose ps
 
 ### Frontend Service
 - **Container:** `s2rtool-frontend`
-- **Port:** 3000 (mapped from container port 80)
+- **Port:** 3001 (mapped from container port 80)
 - **Technology:** Static HTML/CSS/JS served by Nginx
 - **Web Server:** Nginx Alpine
 
@@ -155,7 +155,7 @@ services:
 
   frontend:
     ports:
-      - "3000:80"    # Change left number: "NEW_PORT:80"
+      - "3001:80"    # Change left number: "NEW_PORT:80"
 ```
 
 **Note:** If you change backend port, you also need to update `frontend/script.js`:
@@ -245,7 +245,7 @@ docker-compose ps
 curl http://localhost:5001/health
 
 # Frontend health endpoint
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 
 # Check from inside container
 docker-compose exec backend curl http://localhost:5001/health
@@ -431,7 +431,7 @@ docker-compose exec backend bash
 
 # Health check
 curl http://localhost:5001/health
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
 
 ---
