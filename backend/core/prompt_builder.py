@@ -24,13 +24,16 @@ You are given TWO images in this exact order:
 
 1. **PRESERVE GEOMETRY** (Priority 1 - ABSOLUTE REQUIREMENT):
    ⚠️ SKETCH ADHERENCE LEVEL: {sketch_adherence} (0.5=flexible, 1.0=pixel-perfect)
+   🏢 **BUILDING HAS EXACTLY {floor_count} - THIS IS NON-NEGOTIABLE!**
    ✓ Maintain EXACT proportions from sketch (±2% tolerance maximum)
    ✓ Keep ALL window/door positions UNCHANGED
    ✓ Preserve overall building silhouette PERFECTLY
+   ✓ Preserve the EXACT NUMBER OF FLOORS visible in the sketch
    ✓ White padding around sketch is TECHNICAL ARTIFACT - ignore it, do NOT extend building into it
    ✗ DO NOT copy building shapes from reference image
    ✗ DO NOT alter building width/height ratios
    ✗ DO NOT change structural proportions to "improve" composition
+   ✗ DO NOT add or remove floors to "improve" the design
 
 2. **ADOPT STYLE** (Priority 2):
    ✓ Study reference lighting conditions carefully
@@ -80,12 +83,15 @@ You are given TWO images in this exact order:
 
 1. **PRESERVE STRUCTURE** (ABSOLUTE REQUIREMENT):
    ⚠️ SKETCH ADHERENCE LEVEL: {sketch_adherence} (0.5=flexible, 1.0=pixel-perfect)
+   🏢 **BUILDING HAS EXACTLY {floor_count} - THIS IS NON-NEGOTIABLE!**
    ✓ Maintain exact proportions from sketch (±2% maximum)
    ✓ Keep all architectural elements in exact positions
+   ✓ Preserve the EXACT NUMBER OF FLOORS visible in the sketch
    ✓ White padding around sketch is TECHNICAL ARTIFACT - ignore it, do NOT extend building into it
    ✗ Do not add/remove major features
    ✗ Do NOT alter building width/height ratios
    ✗ Do NOT change structural proportions to fill frame
+   ✗ DO NOT add or remove floors to "improve" the design
 
 2. **ADD REALISM**:
    ✓ Infer realistic materials based on building type
@@ -211,9 +217,10 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             (prompt, negative_prompt_summary)
         """
         # ✅ FIX: Extract data from ACTUAL translation output format
-        # Translation outputs: building_type, facade_style, materials_precise, environment, technical_specs
-        
+        # Translation outputs: building_type, floor_count, facade_style, materials_precise, environment, technical_specs
+
         building_type = translated_data_en.get('building_type', 'building')
+        floor_count = translated_data_en.get('floor_count', 'unspecified floors')
         facade_style = translated_data_en.get('facade_style', 'modern architecture')
         materials = translated_data_en.get('materials_precise', [])
         environment = translated_data_en.get('environment', [])
@@ -262,6 +269,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         # Format prompt
         prompt = template.format(
             sketch_adherence=adherence_display,
+            floor_count=floor_count,
             aspect_ratio=aspect_ratio,
             user_description=user_description,
             viewpoint_instruction=viewpoint_instruction,

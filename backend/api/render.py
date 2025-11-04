@@ -84,7 +84,7 @@ def render_image():
             return jsonify({"error": f"Translation failed: {str(e)}"}), 500
         
         # Build prompt from FRESH translation (with user edits!)
-        viewpoint = data.get('viewpoint', 'main_facade')
+        viewpoint = data.get('viewpoint', 'match_sketch')  # ✅ FIX: Default to match sketch angle
         aspect_ratio = data.get('aspect_ratio', '16:9')
 
         # ✅ FIX: Extract sketch_adherence from form_data_vi (user-controlled!)

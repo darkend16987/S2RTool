@@ -69,6 +69,7 @@ class Translator:
         # ✅ FIX: These fields match RESTRUCTURE_AND_TRANSLATE_PROMPT output
         required_fields = [
             'building_type',        # ✅ From prompt
+            'floor_count',          # ✅ CRITICAL: Floor count (newly added)
             'facade_style',         # ✅ From prompt
             'critical_elements',    # ✅ From prompt (not critical_geometry)
             'materials_precise',    # ✅ From prompt (not materials_hierarchy)
@@ -80,7 +81,24 @@ class Translator:
         
         if missing:
             raise ValueError(f"Translation missing fields: {missing}")
-        
+
+        # 🚨 CRITICAL: Floor count validation (HIGHEST PRIORITY!)
+        original_floor_count = original.get('floor_count', '')
+        translated_floor_count = translated.get('floor_count', '')
+
+        if original_floor_count and not translated_floor_count:
+            print(f"🚨 CRITICAL WARNING: Floor count MISSING in translation!")
+            print(f"   Original: '{original_floor_count}' → Translated: NONE")
+            print(f"   This MUST be preserved for architectural accuracy!")
+        elif original_floor_count and translated_floor_count:
+            # Extract numbers for comparison
+            import re
+            orig_num = re.findall(r'\d+', str(original_floor_count))
+            trans_num = re.findall(r'\d+', str(translated_floor_count))
+            if orig_num != trans_num:
+                print(f"⚠️ WARNING: Floor count NUMBER changed in translation!")
+                print(f"   Original: '{original_floor_count}' ({orig_num}) → Translated: '{translated_floor_count}' ({trans_num})")
+
         # ✅ FIX: Check materials count
         original_materials = len(original.get('materials_precise', []))
         translated_materials = len(translated.get('materials_precise', []))
