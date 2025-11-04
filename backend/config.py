@@ -109,6 +109,13 @@ SUPPORTED_ASPECT_RATIOS = ASPECT_RATIOS
 
 # ============== Camera Viewpoints ==============
 CAMERA_VIEWPOINTS: Dict[str, Dict] = {
+    "match_sketch": {
+        "name": "Match Sketch Angle (Default)",
+        "name_vi": "Góc nhìn như sketch gốc (Mặc định)",
+        "description": "Use the EXACT camera angle from the source sketch",
+        "camera_angle": "match source sketch precisely",
+        "prompt_addition": "Use the EXACT camera angle, viewpoint, and perspective from the source sketch. Do NOT change the viewing angle - maintain the original camera position from the sketch precisely"
+    },
     "main_facade": {
         "name": "Main Facade",
         "name_vi": "Mặt tiền chính",
@@ -310,6 +317,7 @@ Phân tích sketch kiến trúc và trả về mô tả chi tiết bằng tiến
 OUTPUT FORMAT (JSON):
 {
     "building_type": "Loại công trình (VD: Nhà phố, Biệt thự, Cao ốc...)",
+    "floor_count": "Số tầng CHÍNH XÁC (VD: 2, 3, 4... hoặc '2 tầng + 1 tum' nếu có tầng lửng/tum)",
     "facade_style": "Phong cách kiến trúc (VD: Hiện đại, Tân cổ điển, Đông Dương...)",
     "critical_elements": [
         {
@@ -345,6 +353,7 @@ QUY TẮC:
 5. Trả về ĐÚNG format JSON, không có text thừa
 
 QUAN TRỌNG:
+- "floor_count": ⚠️ TUYỆT ĐỐI phải đếm chính xác số tầng từ sketch! Đây là thông tin QUAN TRỌNG NHẤT!
 - "critical_elements": Tối thiểu 3-5 elements, mô tả rất chi tiết
 - "materials_precise": Phải ghi rõ màu sắc, chất liệu, kết cấu
 - "environment": Bao gồm cả cây cối, đường phố, bầu trời nếu có"""
@@ -358,6 +367,7 @@ Translate the Vietnamese architectural description to English while maintaining 
 INPUT FORMAT (Vietnamese JSON):
 {
     "building_type": "Loại công trình",
+    "floor_count": "Số tầng",
     "facade_style": "Phong cách",
     "critical_elements": [...],
     "materials_precise": [...],
@@ -370,6 +380,7 @@ INPUT FORMAT (Vietnamese JSON):
 OUTPUT FORMAT (English JSON):
 {
     "building_type": "Building type in English",
+    "floor_count": "EXACT floor count (e.g., '3 floors', '2 floors + mezzanine')",
     "facade_style": "Architectural style in English",
     "critical_elements": [
         {
@@ -408,6 +419,7 @@ TRANSLATION RULES:
 6. Return ONLY valid JSON, no additional text
 
 CRITICAL REQUIREMENTS:
+⚠️ **FLOOR COUNT MUST BE PRESERVED EXACTLY** - This is the MOST CRITICAL architectural constraint!
 ⚠️ TRANSLATE **EVERY SINGLE ITEM** IN ARRAYS - DO NOT SKIP OR MERGE!
    - If input has 7 environment items → output MUST have 7 environment items
    - If input has 5 materials → output MUST have 5 materials
