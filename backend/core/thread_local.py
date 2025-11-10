@@ -11,6 +11,28 @@ from typing import Optional
 # Thread-local storage
 _thread_locals = local()
 
+# ✅ Global cache (shared across all threads)
+# Cache is thread-safe because OrderedDict operations are atomic in CPython
+_global_analysis_cache = None
+
+
+def get_analysis_cache():
+    """
+    Get global analysis cache instance
+
+    Note: This is intentionally NOT thread-local because we want
+    to share cached results across all threads.
+
+    Returns:
+        AnalysisCache: Shared cache instance
+    """
+    global _global_analysis_cache
+    if _global_analysis_cache is None:
+        from core.analysis_cache import AnalysisCache
+        _global_analysis_cache = AnalysisCache(maxsize=100, ttl_hours=24)
+        print("✅ Analysis cache initialized (maxsize=100, TTL=24h)")
+    return _global_analysis_cache
+
 
 def get_image_processor():
     """

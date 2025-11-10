@@ -220,7 +220,20 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         # Translation outputs: building_type, floor_count, facade_style, materials_precise, environment, technical_specs
 
         building_type = translated_data_en.get('building_type', 'building')
-        floor_count = translated_data_en.get('floor_count', 'unspecified floors')
+
+        # ✅ NEW: Format floor count from integer + mezzanine flag
+        floor_num = translated_data_en.get('floor_count', 3)
+        has_mezzanine = translated_data_en.get('has_mezzanine', False)
+
+        # Build clear, unambiguous floor count string
+        if isinstance(floor_num, int):
+            floor_count = f"EXACTLY {floor_num} {'floor' if floor_num == 1 else 'floors'}"
+            if has_mezzanine:
+                floor_count += " plus one mezzanine/loft level"
+        else:
+            # Fallback for old string format (backward compatible)
+            floor_count = str(floor_num)
+
         facade_style = translated_data_en.get('facade_style', 'modern architecture')
         materials = translated_data_en.get('materials_precise', [])
         environment = translated_data_en.get('environment', [])

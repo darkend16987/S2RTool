@@ -100,6 +100,50 @@
                     <input type="text" id="facade_style" placeholder="Ví dụ: Modern minimalist, Neoclassical, Indochine...">
                 </div>
 
+                <!-- ✅ NEW: Floor Count Field -->
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="floor_count">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"/>
+                                <rect x="14" y="3" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/>
+                            </svg>
+                            Số tầng (Floor Count) <span style="color: #ef4444;">*</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button type="button" id="floorMinus" class="btn-icon" style="width: 40px; height: 40px; font-size: 1.5rem; padding: 0;">−</button>
+                            <input
+                                type="number"
+                                id="floor_count"
+                                min="1"
+                                max="50"
+                                value="3"
+                                required
+                                style="text-align: center; font-size: 1.25rem; font-weight: 600; width: 80px; padding: 0.5rem;"
+                            >
+                            <button type="button" id="floorPlus" class="btn-icon" style="width: 40px; height: 40px; font-size: 1.5rem; padding: 0;">+</button>
+                        </div>
+                        <small style="color: #64748b; font-size: 0.875rem; display: block; margin-top: 0.25rem;">Số tầng chính (không tính tum/lửng)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3h18v18H3z"/>
+                                <path d="M9 3v18"/>
+                                <path d="M3 9h18"/>
+                            </svg>
+                            Tầng lửng/Tum
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="has_mezzanine" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span>Có tầng lửng/tum (Mezzanine)</span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Aspect Ratio & Viewpoint -->
                 <div class="form-grid-2">
                     <div class="form-group">
