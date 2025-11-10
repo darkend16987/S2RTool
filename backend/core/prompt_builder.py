@@ -189,7 +189,98 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
 
 **OUTPUT**: Edited image with natural transitions
 """
-    
+
+    # ============== PLANNING MODE PROMPTS ==============
+
+    PLANNING_RENDER_PROMPT = """
+**ROLE**: You are an expert AI urban planning visualization specialist.
+
+**INPUT IMAGES (in order)**:
+1. **Site Plan**: Overall aerial sketch showing the entire development site
+2. **Lot Map**: Numbered/color-coded map showing individual lot boundaries and identifications
+
+**YOUR TASK - Urban Planning Visualization**:
+
+1. **LOT FIDELITY IS PARAMOUNT** (Priority 1 - ABSOLUTE REQUIREMENT):
+   ⚠️ Each lot boundary from Lot Map MUST be preserved with 95%+ accuracy
+   ✓ Maintain EXACT lot shapes and dimensions
+   ✓ Preserve EXACT lot positions relative to each other
+   ✓ Keep EXACT lot count (do not merge or split lots)
+   ✓ Follow numbered/colored lot identification exactly
+   ✗ DO NOT adjust lot boundaries to "improve" layout
+   ✗ DO NOT change lot shapes for aesthetic reasons
+   ✗ DO NOT merge or split lots
+
+2. **LOT-SPECIFIC DESCRIPTIONS** (Priority 2):
+   Follow these descriptions for each lot EXACTLY:
+
+   {lot_descriptions}
+
+   ⚠️ CRITICAL: Match each lot number to its description precisely
+   ✓ Build EXACTLY what is described for each lot
+   ✓ Respect floor counts, building types, materials specified
+   ✗ DO NOT swap buildings between lots
+   ✗ DO NOT improvise building designs beyond descriptions
+
+3. **MASSING & SCALE** (Priority 3):
+   ✓ Show realistic building masses (height, bulk, footprint)
+   ✓ Maintain correct height relationships between lots
+   ✓ Show clear lot separations (gaps, boundaries)
+   ✓ Respect setbacks and spacing
+   ✗ DO NOT exaggerate or minimize building sizes
+
+4. **AERIAL PERSPECTIVE** (Priority 4):
+   Camera Angle: {camera_angle}
+   ✓ Show entire development from specified aerial view
+   ✓ Capture layout relationships clearly
+   ✓ Show all lots in one coherent view
+   ✓ Ensure lot boundaries are visible and distinguishable
+
+5. **TIME & ATMOSPHERE** (Priority 5):
+   Time of Day: {time_of_day}
+   ✓ Apply realistic lighting for this time
+   ✓ Natural shadows respecting sun angle
+   ✓ Atmospheric effects (haze, fog if appropriate)
+   ✓ Sky and weather appropriate to time
+
+6. **URBAN CONTEXT & REALISM**:
+   ✓ Add streets, roads, pathways between lots
+   ✓ Include urban infrastructure (sidewalks, parking)
+   ✓ Add landscaping (trees, grass, plazas)
+   ✓ Show site entrance/access points
+   ✓ Add surrounding context (neighboring buildings if relevant)
+   ✓ Include people, vehicles for scale (sized realistically)
+   ✓ Show utilities (streetlights, signs) if appropriate
+
+7. **RENDERING QUALITY**:
+   ✓ Photorealistic materials (concrete, glass, metal, brick)
+   ✓ Accurate reflections (glass facades, water features)
+   ✓ Natural depth of field (slight blur for distance)
+   ✓ Global illumination (realistic light bouncing)
+   ✓ Soft shadows with proper penumbra
+   ✓ HDRI sky for realistic lighting
+   ✓ Bloom effect on bright surfaces (subtle)
+
+8. **STYLE KEYWORDS** (Optional Enhancements):
+   {style_keywords}
+
+9. **OUTPUT FORMAT**:
+   ✓ Aspect ratio: {aspect_ratio}
+   ✓ Single photorealistic aerial rendering
+   ✗ No text labels, lot numbers, or annotations on image
+   ✗ No watermarks or overlays
+
+**OUTPUT**: Professional urban planning visualization showing entire development site with all lots rendered according to their specific descriptions, viewed from {camera_angle} at {time_of_day}.
+
+**VERIFICATION CHECKLIST**:
+- [ ] All lot boundaries match Lot Map precisely
+- [ ] Each lot has building matching its description
+- [ ] Lot count matches exactly
+- [ ] Layout relationships preserved
+- [ ] Aerial perspective is clear and realistic
+- [ ] Materials and details are photorealistic
+"""
+
     # ============== PUBLIC METHODS ==============
     
     @classmethod
@@ -326,3 +417,64 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         """Get translation prompt from config"""
         from config import RESTRUCTURE_AND_TRANSLATE_PROMPT
         return RESTRUCTURE_AND_TRANSLATE_PROMPT
+
+    @classmethod
+    def build_planning_prompt(
+        cls,
+        lot_descriptions: List[Dict],
+        camera_angle: str = "drone_45deg",
+        time_of_day: str = "golden_hour",
+        aspect_ratio: str = "16:9",
+        style_keywords: str = ""
+    ) -> str:
+        """
+        Build planning mode render prompt
+
+        Args:
+            lot_descriptions: List of {lot_number, description} dicts
+            camera_angle: Aerial perspective (drone_45deg, birds_eye, etc.)
+            time_of_day: Lighting time (golden_hour, midday, etc.)
+            aspect_ratio: Target aspect ratio
+            style_keywords: Optional style enhancements
+
+        Returns:
+            Formatted planning prompt
+        """
+        # Camera angle descriptions
+        camera_angles = {
+            "drone_45deg": "Drone view at 45° angle (oblique aerial view showing both horizontal layout and building heights)",
+            "birds_eye": "Bird's eye view (90° directly overhead, pure plan view)",
+            "low_drone": "Low drone view at 30° (closer to ground, more dramatic building heights)",
+            "isometric": "Isometric view (technical 3D view showing all three dimensions equally)"
+        }
+
+        # Time of day descriptions
+        time_descriptions = {
+            "golden_hour": "Golden hour (warm sunset/sunrise lighting, long soft shadows)",
+            "midday": "Midday (bright overhead sun, short sharp shadows)",
+            "blue_hour": "Blue hour (twilight, cool blue tones, artificial lights on)",
+            "overcast": "Overcast day (soft diffused lighting, minimal shadows)"
+        }
+
+        # Format lot descriptions
+        lot_desc_text = "\n".join([
+            f"   LOT {lot['lot_number']}: {lot['description']}"
+            for lot in lot_descriptions
+        ])
+
+        camera_desc = camera_angles.get(camera_angle, camera_angles["drone_45deg"])
+        time_desc = time_descriptions.get(time_of_day, time_descriptions["golden_hour"])
+
+        # Handle empty style keywords
+        style_text = style_keywords if style_keywords.strip() else "None specified - use professional architectural visualization standards"
+
+        # Format prompt
+        prompt = cls.PLANNING_RENDER_PROMPT.format(
+            lot_descriptions=lot_desc_text,
+            camera_angle=camera_desc,
+            time_of_day=time_desc,
+            aspect_ratio=aspect_ratio,
+            style_keywords=style_text
+        )
+
+        return prompt

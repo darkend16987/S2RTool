@@ -1085,5 +1085,433 @@ function hideSuccess(id) {
     }
 }
 
+// ============== PLANNING MODE ==============
+
+// Planning Mode State
+let currentSitePlanImage = null;
+let currentLotMapImage = null;
+let lotDescriptions = [];
+let isPlanningRendering = false;
+
+function setupPlanningMode() {
+    console.log('🔧 Setting up Planning Mode...');
+
+    // Mode selector buttons
+    const buildingBtn = document.getElementById('modeBuildingBtn');
+    const planningBtn = document.getElementById('modePlanningBtn');
+
+    if (!buildingBtn || !planningBtn) {
+        console.warn('⚠️  Mode selector buttons not found');
+        return;
+    }
+
+    // Mode switching
+    buildingBtn.addEventListener('click', () => switchToMode('building'));
+    planningBtn.addEventListener('click', () => switchToMode('planning'));
+
+    // Planning mode uploads
+    const sitePlanInput = document.getElementById('uploadSitePlan');
+    const lotMapInput = document.getElementById('uploadLotMap');
+
+    if (sitePlanInput) {
+        sitePlanInput.addEventListener('change', handleSitePlanUpload);
+    }
+
+    if (lotMapInput) {
+        lotMapInput.addEventListener('change', handleLotMapUpload);
+    }
+
+    // Add lot button
+    const addLotBtn = document.getElementById('addLotBtn');
+    if (addLotBtn) {
+        addLotBtn.addEventListener('click', addLotDescription);
+    }
+
+    // Generate planning render button
+    const generatePlanningBtn = document.getElementById('generatePlanningBtn');
+    if (generatePlanningBtn) {
+        generatePlanningBtn.addEventListener('click', generatePlanningRender);
+    }
+
+    console.log('✅ Planning Mode setup complete');
+}
+
+function switchToMode(mode) {
+    console.log(`🔄 Switching to ${mode} mode`);
+
+    const buildingBtn = document.getElementById('modeBuildingBtn');
+    const planningBtn = document.getElementById('modePlanningBtn');
+    const buildingContainer = document.getElementById('buildingModeContainer');
+    const planningContainer = document.getElementById('planningModeContainer');
+
+    if (mode === 'building') {
+        // Update button states
+        buildingBtn.classList.add('mode-card-active');
+        planningBtn.classList.remove('mode-card-active');
+
+        // Show/hide containers
+        buildingContainer.style.display = 'block';
+        planningContainer.style.display = 'none';
+    } else {
+        // Update button states
+        buildingBtn.classList.remove('mode-card-active');
+        planningBtn.classList.add('mode-card-active');
+
+        // Show/hide containers
+        buildingContainer.style.display = 'none';
+        planningContainer.style.display = 'block';
+    }
+}
+
+async function handleSitePlanUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        console.log('📤 Processing site plan upload...');
+
+        // Optimize image
+        const optimizedBlob = await optimizeImageForUpload(file);
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentSitePlanImage = e.target.result;
+
+            // Update UI
+            const uploaderDiv = document.querySelector('#sitePlanUploader');
+            const previewImg = document.getElementById('sitePlanPreview');
+
+            if (uploaderDiv && previewImg) {
+                uploaderDiv.classList.add('has-image');
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('hidden');
+
+                // Update text
+                const uploadText = uploaderDiv.querySelector('.planning-upload-text');
+                if (uploadText) {
+                    uploadText.textContent = '✅ Đã tải Site Plan';
+                }
+            }
+
+            console.log('✅ Site plan uploaded');
+        };
+        reader.readAsDataURL(optimizedBlob);
+
+    } catch (error) {
+        console.error('❌ Site plan upload failed:', error);
+        showError('planningError', 'Lỗi tải site plan. Vui lòng thử lại.');
+    }
+}
+
+async function handleLotMapUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        console.log('📤 Processing lot map upload...');
+
+        // Optimize image
+        const optimizedBlob = await optimizeImageForUpload(file);
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentLotMapImage = e.target.result;
+
+            // Update UI
+            const uploaderDiv = document.querySelector('#lotMapUploader');
+            const previewImg = document.getElementById('lotMapPreview');
+
+            if (uploaderDiv && previewImg) {
+                uploaderDiv.classList.add('has-image');
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('hidden');
+
+                // Update text
+                const uploadText = uploaderDiv.querySelector('.planning-upload-text');
+                if (uploadText) {
+                    uploadText.textContent = '✅ Đã tải Lot Map';
+                }
+            }
+
+            // Enable add lot button
+            const addLotBtn = document.getElementById('addLotBtn');
+            if (addLotBtn) {
+                addLotBtn.disabled = false;
+            }
+
+            console.log('✅ Lot map uploaded');
+        };
+        reader.readAsDataURL(optimizedBlob);
+
+    } catch (error) {
+        console.error('❌ Lot map upload failed:', error);
+        showError('planningError', 'Lỗi tải lot map. Vui lòng thử lại.');
+    }
+}
+
+function addLotDescription() {
+    const container = document.getElementById('lotCardsContainer');
+    if (!container) return;
+
+    const lotNumber = container.children.length + 1;
+
+    const lotCard = document.createElement('div');
+    lotCard.className = 'lot-card';
+    lotCard.dataset.lotIndex = lotNumber - 1;
+
+    lotCard.innerHTML = `
+        <div class="lot-card-header">
+            <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                <strong>Lô số:</strong>
+                <input type="text"
+                       class="lot-number-input"
+                       value="${lotNumber}"
+                       placeholder="Lô ${lotNumber}">
+            </label>
+            <button type="button" class="btn-remove" style="margin: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <textarea
+            class="lot-description-input"
+            placeholder="Mô tả lô này: công trình, số tầng, vật liệu, màu sắc, đặc điểm..."
+        ></textarea>
+    `;
+
+    // Remove button handler
+    lotCard.querySelector('.btn-remove').addEventListener('click', () => {
+        lotCard.remove();
+        updateLotNumbers();
+        updateGenerateButton();
+    });
+
+    // Update generate button when description changes
+    lotCard.querySelector('.lot-description-input').addEventListener('input', updateGenerateButton);
+
+    container.appendChild(lotCard);
+
+    // Scroll to new card
+    lotCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Focus on description field
+    lotCard.querySelector('.lot-description-input').focus();
+
+    // Update generate button state
+    updateGenerateButton();
+
+    console.log(`✅ Added lot description card #${lotNumber}`);
+}
+
+function updateLotNumbers() {
+    const container = document.getElementById('lotCardsContainer');
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.lot-card');
+    cards.forEach((card, index) => {
+        card.dataset.lotIndex = index;
+        const input = card.querySelector('.lot-number-input');
+        if (input && !input.value.trim()) {
+            input.value = index + 1;
+        }
+    });
+}
+
+function updateGenerateButton() {
+    const generateBtn = document.getElementById('generatePlanningBtn');
+    if (!generateBtn) return;
+
+    // Check if we have all required data
+    const hasSitePlan = currentSitePlanImage !== null;
+    const hasLotMap = currentLotMapImage !== null;
+
+    const container = document.getElementById('lotCardsContainer');
+    const hasLots = container && container.children.length > 0;
+
+    // Check if at least one lot has description
+    let hasDescriptions = false;
+    if (container) {
+        const descriptions = Array.from(container.querySelectorAll('.lot-description-input'));
+        hasDescriptions = descriptions.some(input => input.value.trim() !== '');
+    }
+
+    generateBtn.disabled = !(hasSitePlan && hasLotMap && hasLots && hasDescriptions);
+}
+
+function collectLotDescriptions() {
+    const container = document.getElementById('lotCardsContainer');
+    if (!container) return [];
+
+    const lots = [];
+    const cards = container.querySelectorAll('.lot-card');
+
+    cards.forEach((card) => {
+        const numberInput = card.querySelector('.lot-number-input');
+        const descriptionInput = card.querySelector('.lot-description-input');
+
+        const lotNumber = numberInput ? numberInput.value.trim() : '';
+        const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+        if (lotNumber && description) {
+            lots.push({
+                lot_number: lotNumber,
+                description: description
+            });
+        }
+    });
+
+    return lots;
+}
+
+async function generatePlanningRender() {
+    if (!currentSitePlanImage || !currentLotMapImage) {
+        showError('planningError', 'Vui lòng upload Site Plan và Lot Map!');
+        return;
+    }
+
+    const lots = collectLotDescriptions();
+    if (lots.length === 0) {
+        showError('planningError', 'Vui lòng thêm ít nhất một mô tả lô!');
+        return;
+    }
+
+    // Prevent double-click
+    if (isPlanningRendering) {
+        console.warn('⚠️  Planning render already in progress');
+        return;
+    }
+
+    isPlanningRendering = true;
+    const generateBtn = document.getElementById('generatePlanningBtn');
+
+    try {
+        console.log('🎨 Generating planning render...');
+
+        // Show loading state
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<span class="spinner"></span> Đang render...';
+        hideError('planningError');
+        hideSuccess('planningSuccess');
+
+        // Collect settings
+        const cameraAngle = document.getElementById('planningCameraAngle').value;
+        const timeOfDay = document.getElementById('planningTimeOfDay').value;
+        const aspectRatio = document.getElementById('planningAspectRatio').value;
+        const styleKeywords = document.getElementById('planningStyleKeywords').value;
+
+        const requestData = {
+            site_plan_base64: currentSitePlanImage,
+            lot_map_base64: currentLotMapImage,
+            lot_descriptions: lots,
+            camera_angle: cameraAngle,
+            time_of_day: timeOfDay,
+            aspect_ratio: aspectRatio,
+            style_keywords: styleKeywords
+        };
+
+        console.log('📝 Planning request:', {
+            lots: lots.length,
+            camera_angle: cameraAngle,
+            time_of_day: timeOfDay
+        });
+
+        const response = await fetch(`${API_BASE_URL}/planning/render`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Planning render failed');
+        }
+
+        const result = await response.json();
+
+        // Display result
+        displayPlanningRender(result.generated_image_base64, result.mime_type);
+
+        showSuccess('planningSuccess', '🎉 Planning render hoàn tất!');
+        console.log('✅ Planning render complete');
+
+    } catch (error) {
+        console.error('❌ Planning render failed:', error);
+        showError('planningError', `Lỗi render: ${error.message}`);
+    } finally {
+        // Restore button
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="10 8 16 12 10 16 10 8"/>
+            </svg>
+            Generate Planning Render
+        `;
+        isPlanningRendering = false;
+    }
+}
+
+function displayPlanningRender(base64Data, mimeType) {
+    const gallery = document.getElementById('planningGallery');
+    if (!gallery) return;
+
+    gallery.innerHTML = '';
+
+    const img = document.createElement('img');
+    img.src = `data:${mimeType};base64,${base64Data}`;
+    img.alt = 'Planning render result';
+
+    gallery.appendChild(img);
+
+    // Show download button
+    const downloadBtn = document.getElementById('downloadPlanningBtn');
+    if (downloadBtn) {
+        downloadBtn.classList.remove('hidden');
+        downloadBtn.onclick = () => downloadPlanningImage(base64Data);
+    }
+
+    console.log('✅ Planning render displayed');
+}
+
+function downloadPlanningImage(base64Data) {
+    try {
+        const byteString = atob(base64Data);
+        const mimeString = 'image/png';
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        const blob = new Blob([ab], { type: mimeString });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `planning-render-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showSuccess('planningSuccess', '✅ Ảnh đã được tải xuống!');
+        console.log('✅ Planning image downloaded');
+
+    } catch (error) {
+        console.error('❌ Download failed:', error);
+        showError('planningError', 'Lỗi khi tải ảnh. Vui lòng thử lại.');
+    }
+}
+
+// Initialize Planning Mode on page load
+document.addEventListener('DOMContentLoaded', () => {
+    setupPlanningMode();
+});
+
 // ============== END ==============
-console.log('📦 Script v3.1 loaded successfully - All fixes applied! 🎉');
+console.log('📦 Script v3.2 loaded successfully - Planning Mode added! 🎉');
