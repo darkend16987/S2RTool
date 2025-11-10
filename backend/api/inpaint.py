@@ -1,5 +1,6 @@
 """
 api/inpaint.py - Inpainting Endpoint
+✅ FIX: Thread-safe instances to prevent race conditions
 """
 
 from flask import Blueprint, request, jsonify
@@ -8,20 +9,16 @@ import base64
 import io
 from PIL import Image
 
-from core.image_processor import ImageProcessor
-from core.inpainting import InpaintingEngine
+from core.thread_local import get_image_processor, get_inpainting_engine
 
 inpaint_bp = Blueprint('inpaint', __name__)
-
-processor = ImageProcessor()
-inpainting = InpaintingEngine()
 
 
 @inpaint_bp.route('/inpaint', methods=['POST'])
 def inpaint_image():
     """
     Inpaint image with mask
-    
+
     Request:
     {
         "source_image_base64": "...",
@@ -30,7 +27,7 @@ def inpaint_image():
         "reference_image_base64": "..." (optional),
         "preserve_mode": "hybrid" (optional)
     }
-    
+
     Response:
     {
         "edited_image_base64": "...",
@@ -38,12 +35,16 @@ def inpaint_image():
     }
     """
     try:
+        # ✅ FIX: Get thread-local instances (prevents race conditions)
+        processor = get_image_processor()
+        inpainting = get_inpainting_engine()
+
         data = request.json
-        
+
         required = ['source_image_base64', 'mask_image_base64', 'edit_instruction']
         if not all(k in data for k in required):
             return jsonify({"error": f"Missing: {required}"}), 400
-        
+
         # Process images
         source_pil, _ = processor.process_base64_image(data['source_image_base64'])
         mask_pil, _ = processor.process_base64_image(data['mask_image_base64'])

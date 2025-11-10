@@ -15,6 +15,12 @@ let currentRenderedImage = null;
 let currentReferenceImage = null;
 let currentMaskImage = null; // ⭐ NEW: Mask for inpainting
 
+// ✅ FIX: Prevent double-click race conditions
+let isAnalyzing = false;
+let isTranslating = false;
+let isRendering = false;
+let isInpainting = false;
+
 // ============== DOM ELEMENTS ==============
 const uploadSketch = document.getElementById('uploadSketch');
 const previewImage = document.getElementById('previewImage');
@@ -124,18 +130,25 @@ function handleImageUpload(event) {
 // ============== STEP 1: ANALYZE SKETCH ==============
 async function analyzeSketch() {
     if (!currentSketchImage) {
-        showError('analyzeError', 'Vui lòng upload ảnh sketch trước!'); // ⭐ FIXED: No more alert()
+        showError('analyzeError', 'Vui lòng upload ảnh sketch trước!');
         return;
     }
-    
+
+    // ✅ FIX: Prevent double-click
+    if (isAnalyzing) {
+        console.warn('⚠️  Analysis already in progress, ignoring duplicate request');
+        return;
+    }
+
+    isAnalyzing = true;
     showSpinner('analyzeSpinner', true);
     analyzeButton.disabled = true;
     hideError('analyzeError');
     hideSuccess('analyzeSuccess');
-    
+
     try {
         console.log('📊 Analyzing sketch...');
-        
+
         const response = await fetch(`${API_BASE_URL}/analyze-sketch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -175,6 +188,7 @@ async function analyzeSketch() {
     } finally {
         showSpinner('analyzeSpinner', false);
         analyzeButton.disabled = false;
+        isAnalyzing = false;  // ✅ FIX: Reset flag
     }
 }
 
@@ -226,11 +240,18 @@ function fillFormFromAnalysis(data) {
 
 // ============== STEP 2: TRANSLATE PROMPT ==============
 async function translatePrompt() {
+    // ✅ FIX: Prevent double-click
+    if (isTranslating) {
+        console.warn('⚠️  Translation already in progress, ignoring duplicate request');
+        return;
+    }
+
+    isTranslating = true;
     const formData = collectFormData();
-    
+
     try {
         console.log('🌐 Translating to English...');
-        
+
         const response = await fetch(`${API_BASE_URL}/translate-prompt`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -238,21 +259,23 @@ async function translatePrompt() {
                 form_data: formData
             })
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const result = await response.json();
         currentTranslatedData = result.translated_data_en;
         console.log('✅ Translation complete');
-        
+
         // Enable generate button
         generateButton.disabled = false;
-        
+
     } catch (error) {
         console.error('❌ Translation failed:', error);
         throw error;
+    } finally {
+        isTranslating = false;  // ✅ FIX: Reset flag
     }
 }
 
@@ -311,6 +334,13 @@ async function generateRender() {
         return;
     }
 
+    // ✅ FIX: Prevent double-click
+    if (isRendering) {
+        console.warn('⚠️  Rendering already in progress, ignoring duplicate request');
+        return;
+    }
+
+    isRendering = true;
     showSpinner('renderSpinner', true);
     generateButton.disabled = true;
     hideError('renderError');
@@ -370,6 +400,7 @@ async function generateRender() {
     } finally {
         showSpinner('renderSpinner', false);
         generateButton.disabled = false;
+        isRendering = false;  // ✅ FIX: Reset flag
     }
 }
 
@@ -782,26 +813,34 @@ async function applyInpainting() {
         showError('renderError', 'Chưa có ảnh render gốc!');
         return;
     }
-    
+
     if (!currentMaskImage) {
         showError('renderError', 'Chưa upload mask image!');
         return;
     }
-    
+
     const instruction = document.getElementById('inpaintInstruction').value.trim();
     if (!instruction) {
         showError('renderError', 'Vui lòng mô tả thay đổi cần thực hiện!');
         return;
     }
-    
+
+    // ✅ FIX: Prevent double-click
+    if (isInpainting) {
+        console.warn('⚠️  Inpainting already in progress, ignoring duplicate request');
+        return;
+    }
+
+    isInpainting = true;
+
     try {
         console.log('🎨 Starting inpainting...');
-        
+
         // Show loading
         const applyBtn = document.getElementById('applyInpaintBtn');
         applyBtn.disabled = true;
         applyBtn.innerHTML = '<span class="spinner"></span> Đang xử lý...';
-        
+
         hideError('renderError');
         hideSuccess('renderSuccess');
         
@@ -847,6 +886,7 @@ async function applyInpainting() {
             </svg>
             Áp dụng Inpainting
         `;
+        isInpainting = false;  // ✅ FIX: Reset flag
     }
 }
 

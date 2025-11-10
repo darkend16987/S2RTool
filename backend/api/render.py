@@ -1,32 +1,30 @@
 """
 api/render.py - Main Render Endpoint
 ✅ FIX: Re-translates form_data_vi to include user edits
+✅ FIX: Thread-safe instances to prevent race conditions
 """
 
 from flask import Blueprint, request, jsonify
 import base64
 import io
 
-from core.image_processor import ImageProcessor
-from core.prompt_builder import PromptBuilder
-from core.gemini_client import GeminiClient
-from core.translator import Translator
+from core.thread_local import (
+    get_image_processor,
+    get_prompt_builder,
+    get_gemini_client,
+    get_translator
+)
 
 render_bp = Blueprint('render', __name__)
-
-processor = ImageProcessor()
-prompt_builder = PromptBuilder()
-gemini = GeminiClient()
-translator = Translator(gemini)  # ✅ ADD: Translator for re-translation
 
 
 @render_bp.route('/render', methods=['POST'])
 def render_image():
     """
     Main render endpoint
-    
+
     ✅ FIX: Now accepts form_data_vi and re-translates to include user edits
-    
+
     Request:
     {
         "image_base64": "...",
@@ -35,7 +33,7 @@ def render_image():
         "viewpoint": "main_facade",
         "reference_image_base64": "..." (optional)
     }
-    
+
     Response:
     {
         "generated_image_base64": "...",
@@ -45,13 +43,19 @@ def render_image():
     }
     """
     try:
+        # ✅ FIX: Get thread-local instances (prevents race conditions)
+        processor = get_image_processor()
+        prompt_builder = get_prompt_builder()
+        gemini = get_gemini_client()
+        translator = get_translator()
+
         data = request.json
-        
+
         # ✅ FIX: Accept form_data_vi instead of translated_data_en
         required = ['image_base64', 'form_data_vi', 'aspect_ratio']
         if not all(k in data for k in required):
             return jsonify({"error": f"Missing required fields: {required}"}), 400
-        
+
         # Process sketch image
         sketch_pil, _ = processor.process_base64_image(data['image_base64'])
         if not sketch_pil:
