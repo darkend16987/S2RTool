@@ -1,31 +1,26 @@
 """
 api/analyze.py - Sketch Analysis Endpoint
+✅ FIX: Thread-safe instances to prevent race conditions
 """
 
 from flask import Blueprint, request, jsonify
 
-from core.image_processor import ImageProcessor
-from core.prompt_builder import PromptBuilder
-from core.gemini_client import GeminiClient
+from core.thread_local import get_image_processor, get_prompt_builder, get_gemini_client
 from config import Models
 
 analyze_bp = Blueprint('analyze', __name__)
-
-processor = ImageProcessor()
-prompt_builder = PromptBuilder()
-gemini = GeminiClient()
 
 
 @analyze_bp.route('/analyze-sketch', methods=['POST'])
 def analyze_sketch():
     """
     Analyze sketch and return Vietnamese description
-    
+
     Request:
     {
         "image_base64": "..."
     }
-    
+
     Response:
     {
         "building_type": "...",
@@ -35,11 +30,16 @@ def analyze_sketch():
     }
     """
     try:
+        # ✅ FIX: Get thread-local instances (prevents race conditions)
+        processor = get_image_processor()
+        prompt_builder = get_prompt_builder()
+        gemini = get_gemini_client()
+
         data = request.json
-        
+
         if 'image_base64' not in data:
             return jsonify({"error": "Missing image_base64"}), 400
-        
+
         # Process image
         pil_image, _ = processor.process_base64_image(data['image_base64'])
         if not pil_image:

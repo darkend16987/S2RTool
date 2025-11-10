@@ -1,12 +1,14 @@
 """
 core/gemini_client.py - Gemini API Client Wrapper
 Uses BOTH old (generativeai) and new (genai) APIs
+✅ FIX: Added retry logic with exponential backoff
 """
 
 import json
 import re
 import io
 import base64
+import time
 from typing import List, Optional, Union, Dict
 from PIL import Image
 
@@ -29,24 +31,74 @@ from config import GEMINI_API_KEY, Models, Defaults
 
 class GeminiClient:
     """Wrapper for Gemini API operations"""
-    
-    def __init__(self, api_key: Optional[str] = None):
+
+    def __init__(self, api_key: Optional[str] = None, max_retries: int = 3):
         """
         Initialize Gemini client
-        
+
         Args:
             api_key: Gemini API key (uses config if None)
+            max_retries: Maximum number of retry attempts (default: 3)
         """
         self.api_key = api_key or GEMINI_API_KEY
-        
+        self.max_retries = max_retries
+
         # Configure OLD API (for text/JSON)
         genai_old.configure(api_key=self.api_key)
-        
+
         # Configure NEW API (for images)
         if HAS_NEW_API:
             self.client_new = genai_new.Client(api_key=self.api_key)
         else:
             self.client_new = None
+
+    def _retry_with_backoff(self, func, *args, **kwargs):
+        """
+        Execute function with exponential backoff retry logic
+
+        Args:
+            func: Function to execute
+            *args, **kwargs: Arguments to pass to function
+
+        Returns:
+            Function result
+
+        Raises:
+            Last exception if all retries fail
+        """
+        last_exception = None
+
+        for attempt in range(self.max_retries):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                error_msg = str(e).lower()
+
+                # Check if error is retryable
+                is_retryable = any([
+                    'rate limit' in error_msg,
+                    'quota' in error_msg,
+                    'timeout' in error_msg,
+                    'connection' in error_msg,
+                    'temporarily unavailable' in error_msg,
+                    '429' in error_msg,  # Too Many Requests
+                    '500' in error_msg,  # Internal Server Error
+                    '503' in error_msg,  # Service Unavailable
+                ])
+
+                if not is_retryable or attempt == self.max_retries - 1:
+                    # Don't retry or last attempt
+                    raise
+
+                # Calculate backoff time: 2^attempt seconds (2s, 4s, 8s)
+                backoff_time = 2 ** attempt
+                print(f"⚠️  Gemini API error (attempt {attempt + 1}/{self.max_retries}): {e}")
+                print(f"   Retrying in {backoff_time} seconds...")
+                time.sleep(backoff_time)
+
+        # This shouldn't be reached, but just in case
+        raise last_exception
     
     def generate_content_json(
         self,
@@ -56,45 +108,49 @@ class GeminiClient:
     ) -> Dict:
         """
         Generate content and parse as JSON (uses OLD API)
-        
+        ✅ FIX: Wrapped with retry logic
+
         Args:
             prompt_parts: String prompt or list of [text, image, ...]
             model_name: Model to use
             temperature: Generation temperature
-        
+
         Returns:
             Parsed JSON dict
-        
+
         Raises:
             ValueError: If JSON parsing fails
         """
-        model = genai_old.GenerativeModel(model_name)
-        
-        # Ensure prompt_parts is a list
-        if isinstance(prompt_parts, str):
-            prompt_parts = [prompt_parts]
-        
-        # Generate
-        response = model.generate_content(
-            prompt_parts,
-            generation_config=types_old.GenerationConfig(
-                temperature=temperature,
-                response_mime_type="application/json"
+        def _generate():
+            model = genai_old.GenerativeModel(model_name)
+
+            # Ensure prompt_parts is a list
+            parts = prompt_parts if isinstance(prompt_parts, list) else [prompt_parts]
+
+            # Generate
+            response = model.generate_content(
+                parts,
+                generation_config=types_old.GenerationConfig(
+                    temperature=temperature,
+                    response_mime_type="application/json"
+                )
             )
-        )
-        
-        response_text = response.text.strip()
-        
-        # Clean markdown code blocks
-        if response_text.startswith('```'):
-            response_text = re.sub(r'^```(?:json)?\s*', '', response_text)
-            response_text = re.sub(r'\s*```$', '', response_text)
-        
-        # Parse JSON
-        try:
-            return json.loads(response_text)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON from Gemini: {str(e)}\nResponse: {response_text[:500]}")
+
+            response_text = response.text.strip()
+
+            # Clean markdown code blocks
+            if response_text.startswith('```'):
+                response_text = re.sub(r'^```(?:json)?\s*', '', response_text)
+                response_text = re.sub(r'\s*```$', '', response_text)
+
+            # Parse JSON
+            try:
+                return json.loads(response_text)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON from Gemini: {str(e)}\nResponse: {response_text[:500]}")
+
+        # ✅ FIX: Retry with exponential backoff
+        return self._retry_with_backoff(_generate)
     
     def generate_image(
         self,
@@ -106,16 +162,17 @@ class GeminiClient:
     ) -> Optional[Image.Image]:
         """
         Generate image using NEW API (google-genai)
-        
+        ✅ FIX: Wrapped with retry logic
+
         ✅ Uses google-genai package (NEW API) for gemini-2.5-flash-image
-        
+
         Args:
             prompt: Text prompt
             source_image: Source sketch image (optional)
             reference_image: Style reference (optional)
             model_name: Model to use
             temperature: Generation temperature
-        
+
         Returns:
             Generated PIL Image or None
         """
@@ -123,8 +180,8 @@ class GeminiClient:
             print("❌ google-genai not installed!")
             print("   Install: pip install google-genai")
             return None
-        
-        try:
+
+        def _generate_img():
             print(f"🎨 Generating image with {model_name}...")
             
             # Build content parts
@@ -220,9 +277,12 @@ class GeminiClient:
             else:
                 print(f"⚠️  No image generated")
                 return None
-            
+
+        # ✅ FIX: Retry with exponential backoff
+        try:
+            return self._retry_with_backoff(_generate_img)
         except Exception as e:
-            print(f"❌ Image generation failed: {e}")
+            print(f"❌ Image generation failed after retries: {e}")
             import traceback
             traceback.print_exc()
             return None
