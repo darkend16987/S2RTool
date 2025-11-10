@@ -98,7 +98,24 @@ function setupEventListeners() {
             sketchAdherenceValue.textContent = e.target.value;
         });
     }
-    
+
+    // ✅ NEW: Floor count +/- buttons
+    const floorMinus = document.getElementById('floorMinus');
+    const floorPlus = document.getElementById('floorPlus');
+    const floorInput = document.getElementById('floor_count');
+
+    if (floorMinus && floorPlus && floorInput) {
+        floorPlus.addEventListener('click', () => {
+            const current = parseInt(floorInput.value) || 3;
+            floorInput.value = Math.min(50, current + 1);
+        });
+
+        floorMinus.addEventListener('click', () => {
+            const current = parseInt(floorInput.value) || 3;
+            floorInput.value = Math.max(1, current - 1);
+        });
+    }
+
     // Add dynamic item buttons
     document.querySelectorAll('.btn-add').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -109,22 +126,84 @@ function setupEventListeners() {
     });
 }
 
+// ============== IMAGE OPTIMIZATION ==============
+/**
+ * Resize image to optimize upload size (client-side)
+ * ✅ Maintains quality - uses high-quality downscaling
+ * ✅ Matches backend max size (1024px) to avoid wasted bandwidth
+ */
+async function optimizeImageForUpload(file) {
+    const MAX_DIMENSION = 1024; // Match backend resize limit
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let { width, height } = img;
+
+            // Calculate new dimensions if image is larger than backend will use
+            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+
+                console.log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
+            } else {
+                console.log(`📐 Image already optimal: ${width}×${height}`);
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+
+            // ✅ HIGH QUALITY downscaling
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Draw resized image
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Convert to blob (PNG lossless)
+            canvas.toBlob(resolve, 'image/png');
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
+
 // ============== IMAGE UPLOAD ==============
-function handleImageUpload(event) {
+async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        currentSketchImage = e.target.result;
-        previewImage.src = e.target.result;
-        previewImage.classList.remove('hidden');
-        uploadLabel.classList.add('hidden');
-        analyzeButton.disabled = false;
-        
-        console.log('✅ Image uploaded');
-    };
-    reader.readAsDataURL(file);
+
+    try {
+        console.log(`📤 Processing upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+        // ✅ FIX: Optimize image before upload
+        const optimizedBlob = await optimizeImageForUpload(file);
+        const optimizedSize = (optimizedBlob.size / 1024 / 1024).toFixed(2);
+        const originalSize = (file.size / 1024 / 1024).toFixed(2);
+        const savings = ((1 - optimizedBlob.size / file.size) * 100).toFixed(0);
+
+        console.log(`✅ Optimized: ${originalSize}MB → ${optimizedSize}MB (saved ${savings}%)`);
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentSketchImage = e.target.result;
+            previewImage.src = e.target.result;
+            previewImage.classList.remove('hidden');
+            uploadLabel.classList.add('hidden');
+            analyzeButton.disabled = false;
+
+            console.log('✅ Image ready for analysis');
+        };
+        reader.readAsDataURL(optimizedBlob);
+
+    } catch (error) {
+        console.error('❌ Image optimization failed:', error);
+        showError('analyzeError', 'Lỗi xử lý ảnh. Vui lòng thử lại.');
+    }
 }
 
 // ============== STEP 1: ANALYZE SKETCH ==============
@@ -196,12 +275,32 @@ async function analyzeSketch() {
 function fillFormFromAnalysis(data) {
     // ⭐ FIXED: Main description - CHỈ building type
     document.getElementById('main_description').value = data.building_type || '';
-    
+
     // ⭐ FIXED: Facade style - RIÊNG BIỆT
     if (document.getElementById('facade_style')) {
         document.getElementById('facade_style').value = data.facade_style || '';
     }
-    
+
+    // ✅ NEW: Floor count (extract number from string like "3 tầng" or use as-is if integer)
+    if (data.floor_count) {
+        let floorNum = 3; // default
+        if (typeof data.floor_count === 'number') {
+            floorNum = data.floor_count;
+        } else if (typeof data.floor_count === 'string') {
+            // Extract number from string like "3 tầng" or "3 floors"
+            const match = data.floor_count.match(/(\d+)/);
+            if (match) {
+                floorNum = parseInt(match[1]);
+            }
+        }
+        document.getElementById('floor_count').value = floorNum;
+
+        // Check for mezzanine keywords
+        const floorStr = String(data.floor_count).toLowerCase();
+        const hasMezzanine = floorStr.includes('tum') || floorStr.includes('lửng') || floorStr.includes('mezzanine');
+        document.getElementById('has_mezzanine').checked = hasMezzanine;
+    }
+
     // Critical elements
     const criticalContainer = document.getElementById('criticalElementsContainer');
     criticalContainer.innerHTML = '';
@@ -283,7 +382,9 @@ async function translatePrompt() {
 function collectFormData() {
     const data = {
         building_type: document.getElementById('main_description').value,
-        facade_style: document.getElementById('facade_style').value, // ⭐ ALREADY FIXED
+        facade_style: document.getElementById('facade_style').value,
+        floor_count: parseInt(document.getElementById('floor_count').value) || 3,  // ✅ NEW: Integer floor count
+        has_mezzanine: document.getElementById('has_mezzanine').checked,  // ✅ NEW: Mezzanine flag
         sketch_detail_level: currentAnalysisData?.sketch_detail_level || 'intermediate',
         is_colored: currentAnalysisData?.is_colored || false,
         critical_elements: [],
