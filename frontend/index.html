@@ -19,7 +19,30 @@
         </div>
     </header>
 
-    <!-- MAIN CONTAINER - 3 COLUMNS -->
+    <!-- ✅ NEW: MODE SELECTOR -->
+    <section class="mode-selector-section">
+        <div class="mode-selector-container">
+            <h2 class="mode-selector-title">Chọn chế độ Rendering:</h2>
+            <div class="mode-selector">
+                <button id="modeBuildingBtn" class="mode-card mode-card-active">
+                    <div class="mode-icon">🏢</div>
+                    <h3 class="mode-title">Building Render</h3>
+                    <p class="mode-description">Render công trình đơn lẻ với chi tiết cao</p>
+                    <span class="mode-badge">Hiện tại</span>
+                </button>
+
+                <button id="modePlanningBtn" class="mode-card">
+                    <div class="mode-icon">🏙️</div>
+                    <h3 class="mode-title">Planning Render</h3>
+                    <p class="mode-description">Render quy hoạch tổng thể, nhiều lô đất</p>
+                    <span class="mode-badge mode-badge-new">Mới!</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ✅ BUILDING MODE CONTAINER -->
+    <div id="buildingModeContainer" class="mode-container">
     <div class="main-container">
         
         <!-- =============================================== -->
@@ -409,6 +432,199 @@
         </aside>
 
     </div>
+    </div>
+    <!-- END BUILDING MODE CONTAINER -->
+
+    <!-- ✅ PLANNING MODE CONTAINER -->
+    <div id="planningModeContainer" class="mode-container" style="display: none;">
+    <div class="main-container">
+
+        <!-- =============================================== -->
+        <!-- COLUMN 1: SITE PLAN INPUT -->
+        <!-- =============================================== -->
+        <aside class="panel panel-input">
+            <div class="panel-header">
+                <span class="step-badge">Bước 1</span>
+                <h2>Upload Mặt Bằng Quy Hoạch</h2>
+            </div>
+
+            <!-- Site Plan Uploader -->
+            <div id="sitePlanUploader" class="image-uploader">
+                <input type="file" id="uploadSitePlan" accept="image/*" style="display: none;">
+                <label for="uploadSitePlan" id="uploadSitePlanLabel" class="upload-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span class="upload-text">Upload Sketch Mặt Bằng</span>
+                    <span class="upload-hint">Site plan with lots</span>
+                </label>
+                <img id="sitePlanPreview" src="" alt="Site plan preview" class="preview-image hidden">
+            </div>
+
+            <div class="panel-header" style="margin-top: 2rem;">
+                <span class="step-badge">Bước 2</span>
+                <h2>Upload Sơ Đồ Phân Lô</h2>
+            </div>
+
+            <!-- Lot Map Uploader -->
+            <div id="lotMapUploader" class="image-uploader">
+                <input type="file" id="uploadLotMap" accept="image/*" style="display: none;">
+                <label for="uploadLotMap" id="uploadLotMapLabel" class="upload-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span class="upload-text">Upload Sơ Đồ Có Số Lô</span>
+                    <span class="upload-hint">Numbered/colored lot map</span>
+                </label>
+                <img id="lotMapPreview" src="" alt="Lot map preview" class="preview-image hidden">
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <strong>💡 Tips:</strong>
+                <ul>
+                    <li>Sketch mặt bằng rõ ràng, có ranh giới lô</li>
+                    <li>Sơ đồ phân lô: đánh số hoặc tô màu từng lô</li>
+                    <li>Ví dụ: Lô 1, Lô 2, Lô 3...</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- =============================================== -->
+        <!-- COLUMN 2: LOT DESCRIPTIONS -->
+        <!-- =============================================== -->
+        <main class="panel panel-form">
+            <div class="panel-header">
+                <span class="step-badge">Bước 3</span>
+                <h2>Mô Tả Từng Lô Đất</h2>
+            </div>
+
+            <div id="lotDescriptionsContainer">
+                <!-- Lot description cards will be added dynamically -->
+                <div class="info-box" style="text-align: center; padding: 2rem;">
+                    <p style="color: #64748b;">
+                        👆 Upload mặt bằng và sơ đồ phân lô ở bên trái<br>
+                        Sau đó thêm mô tả cho từng lô ở đây
+                    </p>
+                </div>
+            </div>
+
+            <button id="addLotBtn" class="btn-secondary" style="width: 100%; margin-top: 1rem;" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Thêm Lô Mới
+            </button>
+
+            <!-- Planning Settings -->
+            <details class="form-section" open style="margin-top: 2rem;">
+                <summary>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                    ⚙️ Cài Đặt Render
+                </summary>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label for="planningCameraAngle">Góc nhìn Camera</label>
+                        <select id="planningCameraAngle">
+                            <option value="drone_45" selected>Drone 45° (Khuyến nghị)</option>
+                            <option value="birds_eye">Bird's Eye (Nhìn thẳng xuống)</option>
+                            <option value="eye_level">Eye Level (Ngang tầm mắt)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="planningTimeOfDay">Thời gian trong ngày</label>
+                        <select id="planningTimeOfDay">
+                            <option value="day" selected>Ban ngày (Daylight)</option>
+                            <option value="golden_hour">Golden Hour (Hoàng hôn)</option>
+                            <option value="night">Ban đêm (Night)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="planningAspectRatio">Tỷ lệ khung hình</label>
+                        <select id="planningAspectRatio">
+                            <option value="16:9" selected>16:9 (Widescreen)</option>
+                            <option value="4:3">4:3 (Standard)</option>
+                            <option value="1:1">1:1 (Square)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="planningStyleKeywords">Từ khóa phong cách (optional)</label>
+                        <input type="text" id="planningStyleKeywords" placeholder="modern, sustainable, green...">
+                    </div>
+                </div>
+            </details>
+
+            <!-- Generate Button -->
+            <div class="output-actions" style="margin-top: 2rem;">
+                <button id="generatePlanningRenderBtn" class="btn-primary" style="width: 100%;" disabled>
+                    <span id="planningRenderSpinner" class="spinner hidden"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    Generate Planning Render
+                </button>
+            </div>
+
+            <!-- Messages -->
+            <div id="planningRenderError" class="message error-message hidden"></div>
+            <div id="planningRenderSuccess" class="message success-message hidden"></div>
+        </main>
+
+        <!-- =============================================== -->
+        <!-- COLUMN 3: OUTPUT RENDER -->
+        <!-- =============================================== -->
+        <aside class="panel panel-output">
+            <div class="panel-header">
+                <span class="step-badge">Kết quả</span>
+                <h2>Planning Render</h2>
+            </div>
+
+            <!-- Gallery -->
+            <div id="planningGallery" class="gallery">
+                <div class="gallery-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <p>Planning render sẽ xuất hiện ở đây</p>
+                </div>
+            </div>
+
+            <!-- Output Controls -->
+            <div id="planningOutputControls" class="output-controls hidden">
+                <button id="downloadPlanningImageBtn" class="btn-secondary btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Tải về
+                </button>
+                <button id="regeneratePlanningBtn" class="btn-secondary btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1 4 1 10 7 10"/>
+                        <polyline points="23 20 23 14 17 14"/>
+                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                    </svg>
+                    Tạo lại
+                </button>
+            </div>
+        </aside>
+
+    </div>
+    </div>
+    <!-- END PLANNING MODE CONTAINER -->
 
     <!-- FOOTER -->
     <footer class="app-footer">

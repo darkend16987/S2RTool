@@ -20,6 +20,7 @@ from api.translate import translate_bp
 from api.analyze import analyze_bp
 from api.references import references_bp
 from api.inpaint import inpaint_bp
+from api.planning import planning_bp
 
 
 def create_app():
@@ -48,6 +49,7 @@ def create_app():
     app.register_blueprint(render_bp, url_prefix='/api')       # /api/render
     app.register_blueprint(references_bp, url_prefix='/api')   # /api/references/*
     app.register_blueprint(inpaint_bp, url_prefix='/api')      # /api/inpaint
+    app.register_blueprint(planning_bp, url_prefix='/api')     # /api/planning/render
     
     # ============== HEALTH CHECK ==============
     @app.route('/health', methods=['GET'])
@@ -72,14 +74,16 @@ def create_app():
                 "references_list": "/api/references/list",
                 "references_download": "/api/references/download",
                 "references_search": "/api/references/search",
-                "inpaint": "/api/inpaint"
+                "inpaint": "/api/inpaint",
+                "planning_render": "/api/planning/render"
             },
             "features": [
                 "sketch_analysis",
                 "vi_to_en_translation",
                 "multi_viewpoint_rendering",
                 "reference_library",
-                "hybrid_inpainting"
+                "hybrid_inpainting",
+                "planning_mode_rendering"
             ]
         })
     
@@ -215,6 +219,7 @@ if __name__ == '__main__':
     print(f"   http://{ServerConfig.HOST}:{ServerConfig.PORT}/api/translate-prompt")
     print(f"   http://{ServerConfig.HOST}:{ServerConfig.PORT}/api/render")
     print(f"   http://{ServerConfig.HOST}:{ServerConfig.PORT}/api/inpaint")
+    print(f"   http://{ServerConfig.HOST}:{ServerConfig.PORT}/api/planning/render")
     print()
     print("=" * 70)
     print()

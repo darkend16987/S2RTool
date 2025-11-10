@@ -759,6 +759,258 @@ input[type="range"]::-webkit-slider-thumb:hover {
     animation: fadeIn 0.4s ease;
 }
 
+/* ============== MODE SELECTOR ============== */
+.mode-selector-section {
+    max-width: 1600px;
+    margin: 0 auto var(--spacing-xl) auto;
+    padding: 0 var(--spacing-lg);
+}
+
+.mode-selector-container {
+    background: var(--color-panel-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-xl);
+}
+
+.mode-selector-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.mode-card {
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    text-align: center;
+    width: 100%;
+}
+
+.mode-card:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.mode-card-active {
+    border-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary-light) 0%, #eff6ff 100%);
+    box-shadow: var(--shadow-md);
+}
+
+.mode-card-active:hover {
+    transform: translateY(-2px);
+}
+
+.mode-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.mode-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.mode-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Mode Container */
+.mode-container {
+    animation: fadeIn 0.4s ease;
+}
+
+/* ============== PLANNING MODE STYLES ============== */
+.planning-uploader {
+    background: var(--color-bg);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.planning-uploader:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+}
+
+.planning-uploader.has-image {
+    border-style: solid;
+    border-color: var(--color-success);
+    background: #f0fdf4;
+    cursor: default;
+}
+
+.planning-uploader.has-image:hover {
+    background: #f0fdf4;
+}
+
+.planning-upload-icon {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.planning-uploader.has-image .planning-upload-icon {
+    color: var(--color-success);
+}
+
+.planning-upload-text {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.planning-upload-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.planning-preview-image {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-md);
+}
+
+/* Lot Description Cards */
+.lot-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.lot-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: all var(--transition-base);
+}
+
+.lot-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.lot-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.lot-number-input {
+    width: 80px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-align: center;
+}
+
+.lot-description-input {
+    width: 100%;
+    min-height: 80px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    resize: vertical;
+}
+
+.planning-settings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.planning-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.planning-form-group label {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-label);
+}
+
+.planning-form-group select,
+.planning-form-group input {
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+}
+
+/* Planning Gallery */
+.planning-gallery {
+    width: 100%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.planning-gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.planning-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.planning-placeholder svg {
+    opacity: 0.5;
+}
+
 /* ============== PRINT STYLES ============== */
 @media print {
     .app-header,
@@ -768,11 +1020,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     button {
         display: none;
     }
-    
+
     .main-container {
         grid-template-columns: 1fr;
     }
-    
+
     .panel {
         box-shadow: none;
         break-inside: avoid;
