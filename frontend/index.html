@@ -3,636 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Architecture S2R Tool - Sketch to Render</title>
+    <title>S2R Tool - Sketch to Render</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Landing page specific styles */
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .landing-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 4rem;
+        }
+
+        .landing-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .landing-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .mode-cards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .landing-mode-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .landing-mode-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .landing-mode-icon {
+            font-size: 5rem;
+            line-height: 1;
+        }
+
+        .landing-mode-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .landing-mode-description {
+            font-size: 1rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .landing-mode-features {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+            text-align: left;
+        }
+
+        .landing-mode-features li {
+            font-size: 0.875rem;
+            color: #475569;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .landing-mode-features li:last-child {
+            border-bottom: none;
+        }
+
+        .landing-mode-features li::before {
+            content: "✓";
+            color: #059669;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .landing-footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: white;
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .landing-title {
+                font-size: 2rem;
+            }
+
+            .mode-cards-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .landing-mode-card {
+                padding: 2rem;
+            }
+
+            .landing-mode-icon {
+                font-size: 3.5rem;
+            }
+
+            .landing-mode-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <!-- HEADER -->
-    <header class="app-header">
-        <div class="header-content">
-            <h1>🏗️ Architecture S2R Tool</h1>
-            <p class="header-subtitle">Sketch to Photorealistic Render • Powered by Gemini AI</p>
+    <div class="landing-container">
+        <div class="landing-header">
+            <h1 class="landing-title">🏗️ S2R Tool</h1>
+            <p class="landing-subtitle">Chuyển đổi sketch thành render photorealistic với AI</p>
         </div>
-    </header>
 
-    <!-- ✅ NEW: MODE SELECTOR -->
-    <section class="mode-selector-section">
-        <div class="mode-selector-container">
-            <h2 class="mode-selector-title">Chọn chế độ Rendering:</h2>
-            <div class="mode-selector">
-                <button id="modeBuildingBtn" class="mode-card mode-card-active">
-                    <div class="mode-icon">🏢</div>
-                    <h3 class="mode-title">Building Render</h3>
-                    <p class="mode-description">Render công trình đơn lẻ với chi tiết cao</p>
-                    <span class="mode-badge">Hiện tại</span>
-                </button>
+        <div class="mode-cards-container">
+            <!-- Building Render Mode -->
+            <a href="building-render.html" class="landing-mode-card">
+                <div class="landing-mode-icon">🏢</div>
+                <h2 class="landing-mode-title">Building Render</h2>
+                <p class="landing-mode-description">
+                    Render công trình đơn lẻ với chi tiết cao và độ chính xác về cấu trúc
+                </p>
+                <ul class="landing-mode-features">
+                    <li>Phân tích sketch tự động với AI</li>
+                    <li>Đa góc nhìn (facade, 3/4, aerial)</li>
+                    <li>Thư viện reference image</li>
+                    <li>Chỉnh sửa vùng với inpainting</li>
+                    <li>Bảo toàn structure 95%+</li>
+                </ul>
+            </a>
 
-                <button id="modePlanningBtn" class="mode-card">
-                    <div class="mode-icon">🏙️</div>
-                    <h3 class="mode-title">Planning Render</h3>
-                    <p class="mode-description">Render quy hoạch tổng thể, nhiều lô đất</p>
-                    <span class="mode-badge mode-badge-new">Mới!</span>
-                </button>
-            </div>
+            <!-- Planning Render Mode -->
+            <a href="planning-render.html" class="landing-mode-card">
+                <div class="landing-mode-icon">🏙️</div>
+                <h2 class="landing-mode-title">Planning Render</h2>
+                <p class="landing-mode-description">
+                    Render quy hoạch tổng thể, nhiều lô đất với góc nhìn từ trên cao
+                </p>
+                <ul class="landing-mode-features">
+                    <li>Upload mặt bằng phân lô</li>
+                    <li>Mô tả từng lô riêng biệt</li>
+                    <li>Góc nhìn aerial (drone, bird's eye)</li>
+                    <li>Thời gian trong ngày tùy chỉnh</li>
+                    <li>Bảo toàn lot boundaries 95%+</li>
+                </ul>
+            </a>
         </div>
-    </section>
 
-    <!-- ✅ BUILDING MODE CONTAINER -->
-    <div id="buildingModeContainer" class="mode-container">
-    <div class="main-container">
-        
-        <!-- =============================================== -->
-        <!-- COLUMN 1: INPUT SKETCH -->
-        <!-- =============================================== -->
-        <aside class="panel panel-input">
-            <div class="panel-header">
-                <span class="step-badge">Bước 1</span>
-                <h2>Upload Sketch</h2>
-            </div>
-            
-            <!-- Image Uploader -->
-            <div id="imageUploader" class="image-uploader">
-                <input type="file" id="uploadSketch" accept="image/*" style="display: none;">
-                <label for="uploadSketch" id="uploadLabel" class="upload-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span class="upload-text">Kéo thả hoặc nhấn để tải ảnh</span>
-                    <span class="upload-hint">JPG, PNG • Max 16MB</span>
-                </label>
-                <img id="previewImage" src="" alt="Sketch preview" class="preview-image hidden">
-            </div>
-            
-            <!-- Analyze Button -->
-            <button id="analyzeSketchButton" class="btn-primary" disabled>
-                <span id="analyzeSpinner" class="spinner hidden"></span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Phân tích Sketch (AI)
-            </button>
-            
-            <!-- Messages -->
-            <div id="analyzeError" class="message error-message hidden"></div>
-            <div id="analyzeSuccess" class="message success-message hidden"></div>
-            
-            <!-- Info Box -->
-            <div class="info-box">
-                <strong>💡 Tips:</strong>
-                <ul>
-                    <li>Sketch rõ ràng, đủ chi tiết</li>
-                    <li>Tỷ lệ chuẩn, góc nhìn thẳng</li>
-                    <li>Có thể là vẽ tay hoặc CAD</li>
-                </ul>
-            </div>
-        </aside>
-
-        <!-- =============================================== -->
-        <!-- COLUMN 2: PARAMETERS FORM -->
-        <!-- =============================================== -->
-        <main class="panel panel-form">
-            <div class="panel-header">
-                <span class="step-badge">Bước 2</span>
-                <h2>Tinh chỉnh Thông số</h2>
-            </div>
-            
-            <form id="renderPromptForm">
-                
-                <!-- Main Description -->
-                <div class="form-group">
-                    <label for="main_description">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        Loại công trình (Building Type)
-                    </label>
-                    <textarea id="main_description" rows="2" placeholder="AI sẽ điền tự động sau khi phân tích..."></textarea>
-                </div>
-                
-                <!-- ⭐ NEW: Facade Style Field -->
-                <div class="form-group">
-                    <label for="facade_style">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                            <polyline points="9 22 9 12 15 12 15 22"/>
-                        </svg>
-                        Phong cách Kiến trúc
-                    </label>
-                    <input type="text" id="facade_style" placeholder="Ví dụ: Modern minimalist, Neoclassical, Indochine...">
-                </div>
-
-                <!-- ✅ NEW: Floor Count Field -->
-                <div class="form-grid-2">
-                    <div class="form-group">
-                        <label for="floor_count">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="7" height="7"/>
-                                <rect x="14" y="3" width="7" height="7"/>
-                                <rect x="14" y="14" width="7" height="7"/>
-                                <rect x="3" y="14" width="7" height="7"/>
-                            </svg>
-                            Số tầng (Floor Count) <span style="color: #ef4444;">*</span>
-                        </label>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <button type="button" id="floorMinus" class="btn-icon" style="width: 40px; height: 40px; font-size: 1.5rem; padding: 0;">−</button>
-                            <input
-                                type="number"
-                                id="floor_count"
-                                min="1"
-                                max="50"
-                                value="3"
-                                required
-                                style="text-align: center; font-size: 1.25rem; font-weight: 600; width: 80px; padding: 0.5rem;"
-                            >
-                            <button type="button" id="floorPlus" class="btn-icon" style="width: 40px; height: 40px; font-size: 1.5rem; padding: 0;">+</button>
-                        </div>
-                        <small style="color: #64748b; font-size: 0.875rem; display: block; margin-top: 0.25rem;">Số tầng chính (không tính tum/lửng)</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M3 3h18v18H3z"/>
-                                <path d="M9 3v18"/>
-                                <path d="M3 9h18"/>
-                            </svg>
-                            Tầng lửng/Tum
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; cursor: pointer;">
-                            <input type="checkbox" id="has_mezzanine" style="width: 20px; height: 20px; cursor: pointer;">
-                            <span>Có tầng lửng/tum (Mezzanine)</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Aspect Ratio & Viewpoint -->
-                <div class="form-grid-2">
-                    <div class="form-group">
-                        <label for="aspect_ratio">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                            Tỷ lệ khung hình
-                        </label>
-                        <select id="aspect_ratio">
-                            <option value="" disabled selected>Đang tải...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="viewpoint">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            Góc nhìn (Camera)
-                        </label>
-                        <select id="viewpoint">
-                            <option value="match_sketch" selected>Góc nhìn như sketch gốc (Mặc định)</option>
-                            <option value="main_facade">Mặt tiền chính</option>
-                            <option value="three_quarter">Góc 3/4 (45°)</option>
-                            <option value="aerial_angle">Góc cao (Bird's eye)</option>
-                            <option value="low_angle">Góc thấp (Worm's eye)</option>
-                            <option value="balcony_closeup">Cận cảnh ban công</option>
-                            <option value="entrance_detail">Chi tiết lối vào</option>
-                            <option value="interior_exterior">Từ trong nhìn ra</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Fidelity Slider -->
-                <div class="form-group">
-                    <label for="sketch_adherence">
-                        Độ bám sát Sketch: 
-                        <span id="sketch_adherence_value" class="range-value">0.95</span>
-                    </label>
-                    <input type="range" id="sketch_adherence" min="0.5" max="1.0" step="0.01" value="0.95" class="range-slider">
-                    <div class="range-labels">
-                        <span>Sáng tạo</span>
-                        <span>Chính xác</span>
-                    </div>
-                </div>
-
-                <!-- Collapsible Sections -->
-                <details class="form-section" open>
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                        Yếu tố then chốt (Critical Elements)
-                    </summary>
-                    <div class="section-content">
-                        <div id="criticalElementsContainer" class="dynamic-container"></div>
-                        <button type="button" class="btn-add" data-container="criticalElementsContainer" data-type="element">
-                            + Thêm yếu tố
-                        </button>
-                    </div>
-                </details>
-
-                <details class="form-section" open>
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                        Vật liệu chi tiết
-                    </summary>
-                    <div class="section-content">
-                        <div id="materialsPreciseContainer" class="dynamic-container"></div>
-                        <button type="button" class="btn-add" data-container="materialsPreciseContainer" data-type="material">
-                            + Thêm vật liệu
-                        </button>
-                    </div>
-                </details>
-
-                <details class="form-section">
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                        Môi trường & Bối cảnh
-                    </summary>
-                    <div class="section-content">
-                        <div id="environmentContainer" class="dynamic-container"></div>
-                        <button type="button" class="btn-add" data-container="environmentContainer" data-type="setting">
-                            + Thêm bối cảnh
-                        </button>
-                    </div>
-                </details>
-                
-                <!-- ⭐ NEW: Inpainting Section -->
-                <details class="form-section">
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 20h9"/>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                        </svg>
-                        🎨 Chỉnh sửa vùng cụ thể (Inpainting)
-                    </summary>
-                    <div class="section-content">
-                        <!-- Instructions -->
-                        <div class="info-box" style="margin-bottom: 1rem; background: #fef3c7; border-color: #f59e0b;">
-                            <strong>📝 Hướng dẫn tạo Mask:</strong>
-                            <ol style="margin-top: 0.5rem; padding-left: 1.2rem; font-size: 0.875rem;">
-                                <li>Mở ảnh render trong Photoshop/GIMP/Paint.NET</li>
-                                <li>Tạo layer mới, fill đen (RGB: 0,0,0)</li>
-                                <li>Vẽ TRẮNG (RGB: 255,255,255) vào vùng cần sửa</li>
-                                <li>Xuất ảnh mask dạng PNG/JPG</li>
-                            </ol>
-                            <p style="color: #d97706; margin-top: 0.5rem; font-weight: 600;">
-                                ⚠️ Quy tắc: <strong>Trắng = Sửa | Đen = Giữ nguyên</strong>
-                            </p>
-                        </div>
-                        
-                        <!-- Upload Mask -->
-                        <div class="form-group">
-                            <label for="uploadMask">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                                    <path d="M20.4 14.5L16 10 4 20"/>
-                                </svg>
-                                Upload Mask Image
-                            </label>
-                            <input type="file" id="uploadMask" accept="image/*">
-                            <div id="maskPreview" class="hidden" style="margin-top: 0.5rem;">
-                                <img id="maskPreviewImage" src="" alt="Mask preview" style="max-width: 200px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                            </div>
-                        </div>
-                        
-                        <!-- Edit Instruction -->
-                        <div class="form-group">
-                            <label for="inpaintInstruction">
-                                Mô tả thay đổi (Edit Instruction)
-                            </label>
-                            <textarea id="inpaintInstruction" rows="3" placeholder="Ví dụ: Add hanging plants on balcony railings, Add national flag on rooftop"></textarea>
-                        </div>
-                        
-                        <!-- Apply Button -->
-                        <button type="button" id="applyInpaintBtn" class="btn-primary" disabled style="width: 100%;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 20h9"/>
-                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                            </svg>
-                            Áp dụng Inpainting
-                        </button>
-                    </div>
-                </details>
-                
-                <details class="form-section">
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                        Từ khóa Phong cách
-                    </summary>
-                    <div class="section-content">
-                        <div class="form-group">
-                            <input type="text" id="style_keywords" placeholder="professional architectural photography, 8K UHD..." value="professional architectural photography, hyper-realistic rendering, 8K UHD, cinematic color grading">
-                        </div>
-                    </div>
-                </details>
-
-                <details class="form-section">
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                        Thông số Kỹ thuật
-                    </summary>
-                    <div class="section-content">
-                        <div class="form-grid-2">
-                            <div class="form-group">
-                                <label for="tech_camera">Máy ảnh:</label>
-                                <input type="text" id="tech_camera" value="Canon EOS 5D Mark IV">
-                            </div>
-                            <div class="form-group">
-                                <label for="tech_lens">Ống kính:</label>
-                                <input type="text" id="tech_lens" value="24mm wide-angle">
-                            </div>
-                            <div class="form-group">
-                                <label for="tech_perspective">Góc nhìn:</label>
-                                <input type="text" id="tech_perspective" value="eye-level, straight-on">
-                            </div>
-                            <div class="form-group">
-                                <label for="tech_lighting">Ánh sáng:</label>
-                                <input type="text" id="tech_lighting" value="natural sunlight, golden hour">
-                            </div>
-                        </div>
-                    </div>
-                </details>
-
-                <details class="form-section">
-                    <summary>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                        Negative Prompt
-                    </summary>
-                    <div class="section-content">
-                        <div class="form-group">
-                            <textarea id="negative_prompt" rows="3">sketch, drawing, illustration, cartoon, anime, blurry, low resolution, distorted proportions, unrealistic lighting</textarea>
-                        </div>
-                    </div>
-                </details>
-            </form>
-        </main>
-
-        <!-- =============================================== -->
-        <!-- COLUMN 3: OUTPUT & ACTIONS -->
-        <!-- =============================================== -->
-        <aside class="panel panel-output">
-            <div class="panel-header">
-                <span class="step-badge">Bước 3</span>
-                <h2>Kết quả Render</h2>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="output-actions">
-                <!-- Export JSON button will be inserted here by JS -->
-                
-                <button id="generateRenderButton" class="btn-submit" disabled>
-                    <span id="renderSpinner" class="spinner hidden"></span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Tạo Render
-                </button>
-            </div>
-            
-            <!-- Messages -->
-            <div id="renderError" class="message error-message hidden"></div>
-            <div id="renderSuccess" class="message success-message hidden"></div>
-            
-            <!-- Gallery -->
-            <div id="gallery" class="gallery">
-                <div class="gallery-placeholder">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                    <p>Kết quả render sẽ xuất hiện ở đây</p>
-                </div>
-            </div>
-            
-            <!-- Output Controls -->
-            <div id="outputControls" class="output-controls hidden">
-                <button id="downloadImageBtn" class="btn-secondary btn-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Tải về
-                </button>
-                <button id="regenerateBtn" class="btn-secondary btn-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="1 4 1 10 7 10"/>
-                        <polyline points="23 20 23 14 17 14"/>
-                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-                    </svg>
-                    Tạo lại
-                </button>
-            </div>
-            
-            <!-- Stats Box -->
-            <div id="statsBox" class="stats-box hidden">
-                <div class="stat-item">
-                    <span class="stat-label">Thời gian:</span>
-                    <span class="stat-value" id="statTime">-</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Kích thước:</span>
-                    <span class="stat-value" id="statSize">-</span>
-                </div>
-            </div>
-        </aside>
-
+        <div class="landing-footer">
+            <p><strong>Powered by Gemini AI</strong> | Version 3.2</p>
+            <p>© 2025 S2R Tool - Architectural Visualization</p>
+        </div>
     </div>
-    </div>
-    <!-- END BUILDING MODE CONTAINER -->
-
-    <!-- ✅ PLANNING MODE CONTAINER -->
-    <div id="planningModeContainer" class="mode-container" style="display: none;">
-    <div class="main-container">
-
-        <!-- =============================================== -->
-        <!-- COLUMN 1: SITE PLAN INPUT -->
-        <!-- =============================================== -->
-        <aside class="panel panel-input">
-            <div class="panel-header">
-                <span class="step-badge">Bước 1</span>
-                <h2>Upload Mặt Bằng Quy Hoạch</h2>
-            </div>
-
-            <!-- Site Plan Uploader -->
-            <div id="sitePlanUploader" class="image-uploader">
-                <input type="file" id="uploadSitePlan" accept="image/*" style="display: none;">
-                <label for="uploadSitePlan" id="uploadSitePlanLabel" class="upload-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span class="upload-text">Upload Sketch Mặt Bằng</span>
-                    <span class="upload-hint">Site plan with lots</span>
-                </label>
-                <img id="sitePlanPreview" src="" alt="Site plan preview" class="preview-image hidden">
-            </div>
-
-            <div class="panel-header" style="margin-top: 2rem;">
-                <span class="step-badge">Bước 2</span>
-                <h2>Upload Sơ Đồ Phân Lô</h2>
-            </div>
-
-            <!-- Lot Map Uploader -->
-            <div id="lotMapUploader" class="image-uploader">
-                <input type="file" id="uploadLotMap" accept="image/*" style="display: none;">
-                <label for="uploadLotMap" id="uploadLotMapLabel" class="upload-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span class="upload-text">Upload Sơ Đồ Có Số Lô</span>
-                    <span class="upload-hint">Numbered/colored lot map</span>
-                </label>
-                <img id="lotMapPreview" src="" alt="Lot map preview" class="preview-image hidden">
-            </div>
-
-            <!-- Info Box -->
-            <div class="info-box">
-                <strong>💡 Tips:</strong>
-                <ul>
-                    <li>Sketch mặt bằng rõ ràng, có ranh giới lô</li>
-                    <li>Sơ đồ phân lô: đánh số hoặc tô màu từng lô</li>
-                    <li>Ví dụ: Lô 1, Lô 2, Lô 3...</li>
-                </ul>
-            </div>
-        </aside>
-
-        <!-- =============================================== -->
-        <!-- COLUMN 2: LOT DESCRIPTIONS -->
-        <!-- =============================================== -->
-        <main class="panel panel-form">
-            <div class="panel-header">
-                <span class="step-badge">Bước 3</span>
-                <h2>Mô Tả Từng Lô Đất</h2>
-            </div>
-
-            <div id="lotDescriptionsContainer">
-                <!-- Lot description cards will be added dynamically -->
-                <div class="info-box" style="text-align: center; padding: 2rem;">
-                    <p style="color: #64748b;">
-                        👆 Upload mặt bằng và sơ đồ phân lô ở bên trái<br>
-                        Sau đó thêm mô tả cho từng lô ở đây
-                    </p>
-                </div>
-            </div>
-
-            <button id="addLotBtn" class="btn-secondary" style="width: 100%; margin-top: 1rem;" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Thêm Lô Mới
-            </button>
-
-            <!-- Planning Settings -->
-            <details class="form-section" open style="margin-top: 2rem;">
-                <summary>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                    ⚙️ Cài Đặt Render
-                </summary>
-                <div class="section-content">
-                    <div class="form-group">
-                        <label for="planningCameraAngle">Góc nhìn Camera</label>
-                        <select id="planningCameraAngle">
-                            <option value="drone_45" selected>Drone 45° (Khuyến nghị)</option>
-                            <option value="birds_eye">Bird's Eye (Nhìn thẳng xuống)</option>
-                            <option value="eye_level">Eye Level (Ngang tầm mắt)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="planningTimeOfDay">Thời gian trong ngày</label>
-                        <select id="planningTimeOfDay">
-                            <option value="day" selected>Ban ngày (Daylight)</option>
-                            <option value="golden_hour">Golden Hour (Hoàng hôn)</option>
-                            <option value="night">Ban đêm (Night)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="planningAspectRatio">Tỷ lệ khung hình</label>
-                        <select id="planningAspectRatio">
-                            <option value="16:9" selected>16:9 (Widescreen)</option>
-                            <option value="4:3">4:3 (Standard)</option>
-                            <option value="1:1">1:1 (Square)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="planningStyleKeywords">Từ khóa phong cách (optional)</label>
-                        <input type="text" id="planningStyleKeywords" placeholder="modern, sustainable, green...">
-                    </div>
-                </div>
-            </details>
-
-            <!-- Generate Button -->
-            <div class="output-actions" style="margin-top: 2rem;">
-                <button id="generatePlanningRenderBtn" class="btn-primary" style="width: 100%;" disabled>
-                    <span id="planningRenderSpinner" class="spinner hidden"></span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                    Generate Planning Render
-                </button>
-            </div>
-
-            <!-- Messages -->
-            <div id="planningRenderError" class="message error-message hidden"></div>
-            <div id="planningRenderSuccess" class="message success-message hidden"></div>
-        </main>
-
-        <!-- =============================================== -->
-        <!-- COLUMN 3: OUTPUT RENDER -->
-        <!-- =============================================== -->
-        <aside class="panel panel-output">
-            <div class="panel-header">
-                <span class="step-badge">Kết quả</span>
-                <h2>Planning Render</h2>
-            </div>
-
-            <!-- Gallery -->
-            <div id="planningGallery" class="gallery">
-                <div class="gallery-placeholder">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                    <p>Planning render sẽ xuất hiện ở đây</p>
-                </div>
-            </div>
-
-            <!-- Output Controls -->
-            <div id="planningOutputControls" class="output-controls hidden">
-                <button id="downloadPlanningImageBtn" class="btn-secondary btn-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Tải về
-                </button>
-                <button id="regeneratePlanningBtn" class="btn-secondary btn-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="1 4 1 10 7 10"/>
-                        <polyline points="23 20 23 14 17 14"/>
-                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-                    </svg>
-                    Tạo lại
-                </button>
-            </div>
-        </aside>
-
-    </div>
-    </div>
-    <!-- END PLANNING MODE CONTAINER -->
-
-    <!-- FOOTER -->
-    <footer class="app-footer">
-        <p>Made by <strong>Nam Ta</strong> + <strong>Gemini AI</strong></p>
-        <p>©2025 • Architecture S2R Tool • All rights reserved</p>
-    </footer>
-
-    <!-- JavaScript -->
-    <script src="script.js"></script>
 </body>
 </html>
