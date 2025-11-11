@@ -195,32 +195,41 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
     PLANNING_RENDER_PROMPT = """
 **ROLE**: You are an expert AI urban planning visualization specialist.
 
-**INPUT IMAGES (in order)**:
-1. **Site Plan**: Overall aerial sketch showing the entire development site
-2. **Lot Map**: Numbered/color-coded map showing individual lot boundaries and identifications
+**⚠️ CRITICAL CONTEXT**: This is a GENERATIVE planning task. The Site Plan shows ONLY lot boundaries (empty lots with NO buildings). You must CREATE buildings from scratch based on the lot descriptions below.
 
-**YOUR TASK - Urban Planning Visualization**:
+**INPUT IMAGES (in order)**:
+1. **Site Plan**: Aerial sketch showing ONLY lot boundaries/property lines (EMPTY LOTS - no buildings!)
+2. **Lot Map**: Numbered/color-coded map for lot identification
+
+**YOUR TASK - Generate Buildings from Descriptions**:
 
 1. **LOT FIDELITY IS PARAMOUNT** (Priority 1 - ABSOLUTE REQUIREMENT):
-   ⚠️ Each lot boundary from Lot Map MUST be preserved with 95%+ accuracy
-   ✓ Maintain EXACT lot shapes and dimensions
+   ⚠️ Each lot boundary from images MUST be preserved with 95%+ accuracy
+   ⚠️ CRITICAL: Site Plan is EMPTY - you must GENERATE buildings, not transform existing ones
+   ✓ Maintain EXACT lot shapes and dimensions from Site Plan
    ✓ Preserve EXACT lot positions relative to each other
    ✓ Keep EXACT lot count (do not merge or split lots)
-   ✓ Follow numbered/colored lot identification exactly
+   ✓ Follow numbered/colored lot identification from Lot Map
+   ✓ CREATE buildings WITHIN each lot boundary according to descriptions
    ✗ DO NOT adjust lot boundaries to "improve" layout
    ✗ DO NOT change lot shapes for aesthetic reasons
    ✗ DO NOT merge or split lots
+   ✗ DO NOT look for existing buildings in Site Plan (there are NONE - it's pure lot boundaries)
 
-2. **LOT-SPECIFIC DESCRIPTIONS** (Priority 2):
-   Follow these descriptions for each lot EXACTLY:
+2. **BUILDING GENERATION FROM DESCRIPTIONS** (Priority 2):
+   Generate buildings for each lot based on these descriptions:
 
    {lot_descriptions}
 
    ⚠️ CRITICAL: Match each lot number to its description precisely
-   ✓ Build EXACTLY what is described for each lot
+   ⚠️ BUILD FROM SCRATCH - do not copy any buildings (Site Plan has none)
+   ✓ Create EXACTLY what is described for each lot
    ✓ Respect floor counts, building types, materials specified
+   ✓ Position building centrally within its lot boundary
+   ✓ Respect setbacks from lot edges (realistic spacing)
    ✗ DO NOT swap buildings between lots
    ✗ DO NOT improvise building designs beyond descriptions
+   ✗ DO NOT create buildings where no description exists
 
 3. **MASSING & SCALE** (Priority 3):
    ✓ Show realistic building masses (height, bulk, footprint)
