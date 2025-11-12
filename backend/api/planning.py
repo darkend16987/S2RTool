@@ -3,6 +3,8 @@ api/planning.py - Planning Mode Render Endpoint
 Urban planning visualization with multiple lots
 """
 
+import base64
+import io
 from flask import Blueprint, request, jsonify
 
 from core.thread_local import (
@@ -98,17 +100,27 @@ def planning_render():
         print(f"   Aspect ratio: {aspect_ratio}")
 
         # Generate with Gemini
-        # Send: 1) Site Plan, 2) Lot Map (in that order as prompt specifies)
-        result = gemini.generate_content_image(
-            prompt_parts=[planning_prompt, site_plan_pil, lot_map_pil],
-            model_name=Models.FLASH,  # Use FLASH for faster generation
+        # Send: 1) Site Plan as source, 2) Lot Map as reference
+        # Prompt explains the role of each image
+        generated_pil = gemini.generate_image(
+            prompt=planning_prompt,
+            source_image=site_plan_pil,      # Site plan (lot boundaries)
+            reference_image=lot_map_pil,     # Lot map (numbered identification)
             temperature=0.4  # Slightly higher for creative planning visualization
         )
+
+        if not generated_pil:
+            return jsonify({"error": "Planning render generation failed"}), 500
+
+        # Convert PIL Image to base64
+        output_buffer = io.BytesIO()
+        generated_pil.save(output_buffer, format='PNG', quality=95)
+        output_base64 = base64.b64encode(output_buffer.getvalue()).decode('utf-8')
 
         print("✅ Planning render complete")
 
         return jsonify({
-            "generated_image_base64": result,
+            "generated_image_base64": output_base64,
             "mime_type": "image/png"
         })
 
