@@ -188,7 +188,7 @@ def planning_detail_render():
 
         # Extract parameters
         planning_description = planning_data['planning_description']
-        camera_angle = planning_data.get('camera_angle', 'drone_45deg')
+        camera_angle = planning_data.get('camera_angle', 'match_sketch')
         time_of_day = planning_data.get('time_of_day', 'golden_hour')
         weather = planning_data.get('weather', 'clear')
         quality_presets = planning_data.get('quality_presets', {})

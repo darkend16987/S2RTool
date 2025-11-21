@@ -95,11 +95,15 @@
                         Góc nhìn (Camera Angle)
                     </label>
                     <select id="camera_angle">
-                        <option value="drone_45deg" selected>Drone 45° (Khuyên dùng) - Nhìn chéo từ trên</option>
+                        <option value="match_sketch" selected>Giống góc sketch (Mặc định) - Bảo toàn góc nhìn gốc</option>
+                        <option value="drone_45deg">Drone 45° - Nhìn chéo từ trên</option>
                         <option value="birds_eye">Bird's Eye (90°) - Nhìn thẳng từ trên</option>
                         <option value="drone_30deg">Drone thấp 30° - Gần mặt đất hơn</option>
                         <option value="eye_level">Tầm mắt người - Street level</option>
                     </select>
+                    <small style="color: #64748b; font-size: 0.875rem; display: block; margin-top: 0.25rem;">
+                        💡 "Giống góc sketch" giúp bảo toàn góc nhìn ban đầu, tránh thay đổi perspective
+                    </small>
                 </div>
 
                 <!-- Aspect Ratio -->
