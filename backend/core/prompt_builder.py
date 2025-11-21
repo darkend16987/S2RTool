@@ -233,13 +233,20 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
    ✓ Atmospheric effects appropriate to weather
    ✓ Sky and ambience matching conditions
 
+4.5. **QUALITY MODE**:
+   {quality_note}
+
 5. **MATERIALS & TEXTURES** (Photorealistic Quality):
+   ⚠️ Note: At planning scale 1:500, maintain overall material quality without micro-details
 
    Glass Facades:
    - High reflection (70-80%)
-   - Low roughness (0.1-0.2)
-   - Environment reflections visible
-   - Subtle tint/color if appropriate
+   - Fresnel Effect: Edges reflect more than center faces
+   - Subtle distortion (real glass is never 100% flat)
+   - Mix clear window glass + opaque spandrel glass (hiding floor slabs)
+   - Variation: Some panels slightly darker/lighter
+   - Interior visibility: Random curtains (some open, some closed, varied colors: white, cream, gray)
+   - Interior lights: {interior_lighting}
 
    Concrete:
    - Displacement mapping for texture
@@ -257,31 +264,41 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
    - Sharp highlights
    - Industrial appearance
 
-6. **RENDER EFFECTS** (Apply based on quality presets):
+6. **BUILDING DETAILS** (Scale-appropriate):
+   ✓ Vertical fins/louvers for sun shading (if visible at scale)
+   ✓ Balconies with depth (not flat facades)
+   ✓ Podium slightly wider than tower above (if applicable)
+   {rooftop_details}
+
+7. **RENDER EFFECTS** (Apply based on quality presets):
    {render_effects}
 
-7. **URBAN CONTEXT & DETAILS**:
-   ✓ Streets and roads between buildings
+8. **URBAN CONTEXT & DETAILS**:
+   ✓ Streets and roads between buildings (grid pattern if applicable)
+   ✓ Main spine road clearly visible
    ✓ Sidewalks and pathways
-   ✓ Landscaping (trees, grass, shrubs)
-   ✓ Green spaces and plazas
-   ✓ Parking areas if visible
-   ✓ People at appropriate scale (small from aerial view)
-   ✓ Vehicles sized correctly
-   ✓ Street furniture (lights, benches, signs)
-   ✓ Water features if applicable
+   ✓ Parking areas/layouts (if visible from angle)
+   ✓ Landscaping (varied tree species and sizes)
+   ✓ Green spaces and plazas (central green core if applicable)
+   ✓ Water features (ponds, fountains, mirror pools - ONLY if sketch shows them or description mentions)
+   ✓ People at appropriate scale (small from aerial view, varied activities)
+   ✓ Vehicles with subtle motion blur (sized correctly)
+   ✓ Street furniture (lights, benches, signs at appropriate scale)
 
-8. **PHOTOREALISTIC QUALITY**:
+9. **PHOTOREALISTIC QUALITY & AERIAL PERSPECTIVE**:
    ✓ Natural depth of field (slight blur for distance)
+   ✓ Aerial Perspective: Distant buildings slightly desaturated
+   ✓ Atmospheric haze for depth (further objects softer)
    ✓ Realistic material properties
    ✓ Accurate light bouncing and shadows
    ✓ Subtle imperfections for realism
    ✓ Professional architectural photography feel
    ✓ Cinematic color grading
 
-9. **SKETCH ADHERENCE**:
+10. **SKETCH ADHERENCE**:
    Fidelity Level: {sketch_adherence}
    ⚠️ At 0.90+ fidelity, shape preservation is ABSOLUTE
+   ⚠️ At planning scale, focus on massing, proportions, and layout over micro-details
    ⚠️ Even at 0.5 fidelity, basic proportions must match
 
 **OUTPUT FORMAT**:
@@ -610,9 +627,10 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
     def build_planning_detail_prompt(
         cls,
         planning_description: str,
-        camera_angle: str = "drone_45deg",
+        camera_angle: str = "match_sketch",
         time_of_day: str = "golden_hour",
         weather: str = "clear",
+        quality_level: str = "high_fidelity",
         quality_presets: dict = None,
         sketch_adherence: float = 0.90,
         aspect_ratio: str = "16:9"
@@ -625,7 +643,8 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             camera_angle: Aerial perspective
             time_of_day: Time of day for lighting
             weather: Weather conditions
-            quality_presets: Dict of render quality options
+            quality_level: Quality level preset (standard/high_fidelity/ultra_realism)
+            quality_presets: Dict of render quality options (can override quality_level)
             sketch_adherence: How strictly to follow sketch (0.5-1.0)
             aspect_ratio: Target aspect ratio
 
@@ -634,6 +653,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         """
         # Camera angle descriptions
         camera_angles = {
+            "match_sketch": "Match the EXACT camera angle from the source sketch (do NOT change viewing perspective)",
             "drone_45deg": "Drone view at 45° angle (oblique aerial view showing both horizontal layout and building heights)",
             "birds_eye": "Bird's eye view (90° directly overhead, pure plan view)",
             "drone_30deg": "Low drone view at 30° (closer to ground, more dramatic building heights)",
@@ -682,9 +702,46 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
 
         render_effects = "\n   ".join(effects_list) if effects_list else "Standard photorealistic rendering"
 
-        camera_desc = camera_angles.get(camera_angle, camera_angles["drone_45deg"])
+        camera_desc = camera_angles.get(camera_angle, camera_angles["match_sketch"])
         time_desc = time_descriptions.get(time_of_day, time_descriptions["golden_hour"])
         weather_desc = weather_descriptions.get(weather, weather_descriptions["clear"])
+
+        # Quality level adjustments
+        quality_notes = {
+            "standard": "⚡ SPEED MODE: Use basic materials, fewer effects, prioritize render speed. Simplified textures acceptable.",
+            "high_fidelity": "🎯 BALANCED MODE: Full photorealistic materials and effects as specified. Professional architectural visualization quality.",
+            "ultra_realism": "💎 ULTRA MODE: MAXIMUM detail and realism. Enhanced atmospheric effects, micro-variations in materials, professional photography quality. Pay extra attention to all material details, reflections, and subtle environmental effects."
+        }
+        quality_note = quality_notes.get(quality_level, quality_notes["high_fidelity"])
+
+        # Interior lighting logic based on time of day (enhanced for ultra_realism)
+        if time_of_day in ['evening', 'night']:
+            interior_lighting = "Varied pattern: 60-80% of apartments lit (people are home), random warm glow through windows"
+            if quality_level == "ultra_realism":
+                interior_lighting += ", with visible color temperature variations (2700K-3000K), curtain silhouettes, occasional TV flicker"
+        elif time_of_day in ['golden_hour', 'afternoon']:
+            interior_lighting = "Varied pattern: 20-30% of apartments lit (some early returns), subtle interior glow"
+            if quality_level == "ultra_realism":
+                interior_lighting += ", mix of warm and cool lights, realistic dimming variations"
+        else:  # morning, midday
+            interior_lighting = "Minimal interior lights (daytime), mostly natural light, few apartments lit"
+            if quality_level == "ultra_realism":
+                interior_lighting += ", with strong interior-exterior light contrast visible through glass"
+
+        # Rooftop details logic based on camera angle (enhanced for ultra_realism)
+        aerial_angles = ['drone_45deg', 'birds_eye', 'drone_30deg']
+        if camera_angle in aerial_angles or camera_angle == 'match_sketch':
+            rooftop_details = """✓ Rooftop Details (CRITICAL for aerial views):
+   - Elevator shaft housing/tum thang máy
+   - Water tanks and HVAC/chiller units
+   - Safety railings and access stairs
+   - Lightning rods
+   - Maintenance equipment/service areas
+   - ⚠️ Rooftops MUST NOT be empty flat surfaces - these are functional spaces"""
+            if quality_level == "ultra_realism":
+                rooftop_details += "\n   - ULTRA: Add weathering, maintenance access paths, cable runs, subtle rust/patina on metal elements"
+        else:
+            rooftop_details = "✓ Rooftop elements visible if angle permits (not priority for street-level views)"
 
         # Format prompt
         prompt = cls.PLANNING_DETAIL_PROMPT.format(
@@ -692,6 +749,9 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             camera_angle=camera_desc,
             time_of_day=time_desc,
             weather=weather_desc,
+            quality_note=quality_note,
+            interior_lighting=interior_lighting,
+            rooftop_details=rooftop_details,
             render_effects=render_effects,
             sketch_adherence=f"{sketch_adherence:.2f}",
             aspect_ratio=aspect_ratio

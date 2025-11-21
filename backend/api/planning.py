@@ -188,9 +188,10 @@ def planning_detail_render():
 
         # Extract parameters
         planning_description = planning_data['planning_description']
-        camera_angle = planning_data.get('camera_angle', 'drone_45deg')
+        camera_angle = planning_data.get('camera_angle', 'match_sketch')
         time_of_day = planning_data.get('time_of_day', 'golden_hour')
         weather = planning_data.get('weather', 'clear')
+        quality_level = planning_data.get('quality_level', 'high_fidelity')
         quality_presets = planning_data.get('quality_presets', {})
         sketch_adherence = planning_data.get('sketch_adherence', 0.90)
         aspect_ratio = planning_data.get('aspect_ratio', '16:9')
@@ -201,6 +202,7 @@ def planning_detail_render():
             camera_angle=camera_angle,
             time_of_day=time_of_day,
             weather=weather,
+            quality_level=quality_level,
             quality_presets=quality_presets,
             sketch_adherence=sketch_adherence,
             aspect_ratio=aspect_ratio
@@ -210,6 +212,7 @@ def planning_detail_render():
         print(f"   Description: {planning_description[:50]}...")
         print(f"   Camera: {camera_angle}")
         print(f"   Time: {time_of_day}, Weather: {weather}")
+        print(f"   Quality Level: {quality_level}")
         print(f"   Adherence: {sketch_adherence}")
         print(f"   Aspect ratio: {aspect_ratio}")
 
