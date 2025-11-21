@@ -213,6 +213,14 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
    ✗ DO NOT merge or split buildings
    ✗ DO NOT adjust spacing between buildings
 
+   🚨 **ANTI-HALLUCINATION CRITICAL**:
+   ✗ ABSOLUTELY DO NOT add new buildings to empty spaces in the sketch
+   ✗ DO NOT fill vacant lots with buildings
+   ✗ ONLY render buildings that are CLEARLY DRAWN in the sketch
+   ✓ Empty spaces should become: green areas, plazas, parking, playgrounds, sports fields, gardens
+   ✓ Public amenities in empty spaces: community center, supermarket, playground, sports court, garden
+   ✗ NEVER imagine or create additional high-rise or low-rise buildings not shown in sketch
+
 2. **PLANNING DESCRIPTION**:
    {planning_description}
    ⚠️ Use this ONLY as context - shapes must match sketch!
@@ -758,3 +766,102 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         )
 
         return prompt
+
+    PLANNING_ANALYZE_PROMPT = """
+**ROLE**: You are an expert urban planning analyst specializing in reading architectural sketches.
+
+**CRITICAL INSTRUCTION - ANTI-HALLUCINATION**:
+⚠️ Your task is to ANALYZE what EXISTS in the sketch, NOT to suggest or imagine what could be added.
+⚠️ DO NOT count empty spaces as buildings.
+⚠️ DO NOT suggest adding buildings to empty areas.
+⚠️ ONLY describe buildings that are CLEARLY DRAWN in the sketch.
+
+**INPUT**: Planning sketch/drawing showing a development project
+
+**YOUR TASK**: Analyze the sketch and extract structured information in JSON format.
+
+**ANALYSIS REQUIREMENTS**:
+
+1. **Scale Detection**:
+   - Look for scale indicators (1:500, 1:200, 1:150, 1:100)
+   - If no explicit scale shown, estimate based on level of detail:
+     - Minimal detail, massing only → likely 1:500
+     - Moderate detail, facades visible → likely 1:200
+     - High detail, windows visible → likely 1:150 or 1:100
+   - Return one of: "1:500", "1:200", "1:150", "1:100"
+
+2. **Project Type Detection**:
+   - Identify the type of development
+   - Return one of: "mixed_use", "residential", "industrial", "resort", "campus", "commercial"
+
+3. **Overall Description**:
+   - Brief 1-2 sentence summary of the entire project
+   - Focus on layout, composition, and overall character
+
+4. **High-rise Zone Analysis**:
+   ⚠️ CRITICAL: Only count buildings that are CLEARLY DRAWN with significant height
+   - count: "X" or "X-Y" (example: "30-31", "25")
+   - floors: "X" or "X-Y" (example: "38-40", "25-30")
+   - style: "modern", "neoclassical", "minimalist", "industrial", or "tropical_modern"
+   - colors: Describe visible colors (e.g., "vàng, trắng, kính")
+   - features: Notable features like "lam chắn nắng", "ban công", "rooftop equipment"
+
+5. **Low-rise Zone Analysis**:
+   ⚠️ CRITICAL: Only detect if there are CLEARLY DRAWN low-rise buildings
+   - exists: true/false (false if no low-rise buildings visible)
+   - floors: "X" or "X-Y" if exists
+   - style: architectural style if exists
+   - colors: visible colors if exists
+
+6. **Landscape Analysis**:
+   - green_spaces: Describe visible green spaces, parks, amenities (only if shown in sketch)
+   - tree_type: "diverse", "tropical", "temperate", or "minimalist" (based on sketch style)
+   - road_pattern: "grid", "organic", "radial", or "mixed" (based on visible road layout)
+
+**CRITICAL RULES**:
+✓ Count only buildings that are CLEARLY VISIBLE in the sketch
+✓ Use ranges (e.g., "30-31") when exact count is difficult
+✓ If uncertain, provide conservative estimates
+✗ DO NOT suggest adding buildings to empty spaces
+✗ DO NOT count empty lots as buildings
+✗ DO NOT hallucinate features not visible in sketch
+
+**OUTPUT FORMAT** (JSON only):
+```json
+{
+  "scale": "1:500",
+  "project_type": "mixed_use",
+  "overall_description": "Brief 1-2 sentence summary of the project",
+  "highrise_zone": {
+    "count": "30-31",
+    "floors": "38-40",
+    "style": "modern",
+    "colors": "vàng, trắng, kính",
+    "features": "lam chắn nắng, ban công, rooftop VRV"
+  },
+  "lowrise_zone": {
+    "exists": true,
+    "floors": "3-4",
+    "style": "neoclassical",
+    "colors": "mái xám, tường trắng"
+  },
+  "landscape": {
+    "green_spaces": "công viên trung tâm, sân chơi",
+    "tree_type": "diverse",
+    "road_pattern": "grid"
+  }
+}
+```
+
+**IMPORTANT**: Return ONLY valid JSON. Do not add explanations outside the JSON structure.
+"""
+
+    @classmethod
+    def build_planning_analyze_prompt(cls) -> str:
+        """
+        Build planning sketch analysis prompt
+
+        Returns:
+            Analysis prompt for extracting structured data from sketch
+        """
+        return cls.PLANNING_ANALYZE_PROMPT
