@@ -44,14 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ============== ASPECT RATIOS ==============
 async function loadAspectRatios() {
+    // ✅ Updated for Gemini 3.0 higher resolution
     const ratios = {
-        "1:1": "Vuông (1024×1024)",
-        "3:4": "Chân dung (768×1024)",
-        "4:3": "Tiêu chuẩn (1024×768)",
-        "9:16": "Dọc (576×1024)",
-        "16:9": "Widescreen (1024×576)"
+        "1:1": "Vuông (2048×2048) - Master Plan",
+        "3:4": "Chân dung (1536×2048)",
+        "4:3": "Tiêu chuẩn (2048×1536)",
+        "9:16": "Dọc (1152×2048) - Tall Buildings",
+        "16:9": "Widescreen (2048×1152) - Panorama"
     };
-    
+
     aspectRatioSelect.innerHTML = '';
     for (const [value, label] of Object.entries(ratios)) {
         const option = document.createElement('option');
@@ -99,6 +100,10 @@ function setupEventListeners() {
         });
     }
 
+    // ✅ NEW: Environment dropdown custom inputs
+    setupEnvironmentDropdowns();
+}
+
     // ✅ NEW: Floor count +/- buttons
     const floorMinus = document.getElementById('floorMinus');
     const floorPlus = document.getElementById('floorPlus');
@@ -123,6 +128,34 @@ function setupEventListeners() {
             const type = e.target.dataset.type;
             addDynamicItem(container, type);
         });
+    });
+}
+
+// ============== ENVIRONMENT DROPDOWNS ==============
+function setupEnvironmentDropdowns() {
+    const dropdowns = [
+        { select: 'env_location', custom: 'env_location_custom' },
+        { select: 'env_time', custom: 'env_time_custom' },
+        { select: 'env_weather', custom: 'env_weather_custom' },
+        { select: 'env_vehicles', custom: 'env_vehicles_custom' },
+        { select: 'env_people', custom: 'env_people_custom' }
+    ];
+
+    dropdowns.forEach(({ select, custom }) => {
+        const selectEl = document.getElementById(select);
+        const customEl = document.getElementById(custom);
+
+        if (selectEl && customEl) {
+            selectEl.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    customEl.classList.remove('hidden');
+                    customEl.focus();
+                } else {
+                    customEl.classList.add('hidden');
+                    customEl.value = '';
+                }
+            });
+        }
     });
 }
 
@@ -383,8 +416,9 @@ function collectFormData() {
     const data = {
         building_type: document.getElementById('main_description').value,
         facade_style: document.getElementById('facade_style').value,
-        floor_count: parseInt(document.getElementById('floor_count').value) || 3,  // ✅ NEW: Integer floor count
-        has_mezzanine: document.getElementById('has_mezzanine').checked,  // ✅ NEW: Mezzanine flag
+        floor_count: parseInt(document.getElementById('floor_count').value) || 3,  // ✅ Integer floor count
+        floor_details: document.getElementById('floor_details')?.value?.trim() || '',  // ✅ NEW: Optional floor details
+        has_mezzanine: document.getElementById('has_mezzanine').checked,  // ✅ Mezzanine flag
         sketch_detail_level: currentAnalysisData?.sketch_detail_level || 'intermediate',
         is_colored: currentAnalysisData?.is_colored || false,
         critical_elements: [],
@@ -400,7 +434,7 @@ function collectFormData() {
         negative_prompt: document.getElementById('negative_prompt').value,
         sketch_adherence: parseFloat(document.getElementById('sketch_adherence').value)
     };
-    
+
     // Collect critical elements
     document.querySelectorAll('#criticalElementsContainer .dynamic-item').forEach(item => {
         data.critical_elements.push({
@@ -408,7 +442,7 @@ function collectFormData() {
             description: item.querySelector('.item-description').value
         });
     });
-    
+
     // Collect materials
     document.querySelectorAll('#materialsPreciseContainer .dynamic-item').forEach(item => {
         data.materials_precise.push({
@@ -416,15 +450,81 @@ function collectFormData() {
             description: item.querySelector('.item-description').value
         });
     });
-    
-    // Collect environment
-    document.querySelectorAll('#environmentContainer .dynamic-item').forEach(item => {
-        data.environment.push({
-            type: item.querySelector('.item-type').value,
-            description: item.querySelector('.item-description').value
+
+    // ✅ NEW: Collect environment from structured dropdowns
+    const envItems = [];
+
+    // Location
+    const locationSelect = document.getElementById('env_location');
+    const locationValue = locationSelect.value === 'custom'
+        ? document.getElementById('env_location_custom').value
+        : locationSelect.value;
+    if (locationValue) {
+        envItems.push({
+            type: 'Không gian',
+            description: locationValue
         });
-    });
-    
+    }
+
+    // Time of Day
+    const timeSelect = document.getElementById('env_time');
+    const timeValue = timeSelect.value === 'custom'
+        ? document.getElementById('env_time_custom').value
+        : timeSelect.value;
+    if (timeValue) {
+        envItems.push({
+            type: 'Thời điểm',
+            description: timeValue
+        });
+    }
+
+    // Weather
+    const weatherSelect = document.getElementById('env_weather');
+    const weatherValue = weatherSelect.value === 'custom'
+        ? document.getElementById('env_weather_custom').value
+        : weatherSelect.value;
+    if (weatherValue) {
+        envItems.push({
+            type: 'Thời tiết',
+            description: weatherValue
+        });
+    }
+
+    // Vehicles
+    const vehiclesSelect = document.getElementById('env_vehicles');
+    const vehiclesValue = vehiclesSelect.value === 'custom'
+        ? document.getElementById('env_vehicles_custom').value
+        : vehiclesSelect.value;
+    if (vehiclesValue) {
+        envItems.push({
+            type: 'Xe cộ',
+            description: vehiclesValue
+        });
+    }
+
+    // People
+    const peopleSelect = document.getElementById('env_people');
+    const peopleValue = peopleSelect.value === 'custom'
+        ? document.getElementById('env_people_custom').value
+        : peopleSelect.value;
+    if (peopleValue) {
+        envItems.push({
+            type: 'Người',
+            description: peopleValue
+        });
+    }
+
+    // Additional context
+    const additionalContext = document.getElementById('env_additional')?.value?.trim();
+    if (additionalContext) {
+        envItems.push({
+            type: 'Bối cảnh bổ sung',
+            description: additionalContext
+        });
+    }
+
+    data.environment = envItems;
+
     return data;
 }
 

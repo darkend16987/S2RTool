@@ -38,9 +38,9 @@
 
         .mode-cards-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 2rem;
-            max-width: 1200px;
+            max-width: 1600px;
             width: 100%;
         }
 
@@ -116,14 +116,16 @@
             font-size: 0.875rem;
         }
 
-        @media (max-width: 768px) {
-            .landing-title {
-                font-size: 2rem;
-            }
-
+        @media (max-width: 1200px) {
             .mode-cards-container {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .landing-title {
+                font-size: 2rem;
             }
 
             .landing-mode-card {
@@ -177,6 +179,22 @@
                     <li>Góc nhìn aerial (drone, bird's eye)</li>
                     <li>Thời gian trong ngày tùy chỉnh</li>
                     <li>Bảo toàn lot boundaries 95%+</li>
+                </ul>
+            </a>
+
+            <!-- ✅ NEW: Planning Detail Render Mode -->
+            <a href="planning-detail-render.html" class="landing-mode-card">
+                <div class="landing-mode-icon">🌆</div>
+                <h2 class="landing-mode-title">Planning Detail Render</h2>
+                <p class="landing-mode-description">
+                    Render quy hoạch chi tiết từ sketch có sẵn công trình, tập trung vào hình thái tổng thể
+                </p>
+                <ul class="landing-mode-features">
+                    <li>Upload sketch quy hoạch (có công trình)</li>
+                    <li>Bảo toàn shape và tỷ lệ công trình</li>
+                    <li>Góc nhìn birdview/drone 45°</li>
+                    <li>Render quality presets (GI, shadows, reflections)</li>
+                    <li>Focus: Hình thái, layout, không gian xanh</li>
                 </ul>
             </a>
         </div>
