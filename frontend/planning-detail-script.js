@@ -33,6 +33,12 @@ function setupEventListeners() {
     // Click preview to re-upload
     previewImage.addEventListener('click', () => uploadSketch.click());
 
+    // Analyze button
+    const analyzeButton = document.getElementById('analyzeSketchButton');
+    if (analyzeButton) {
+        analyzeButton.addEventListener('click', analyzeSketch);
+    }
+
     // Generate button
     generateButton.addEventListener('click', generateRender);
 
@@ -49,6 +55,19 @@ function setupEventListeners() {
             generateRender();
         }
     });
+
+    // Low-rise toggle
+    const hasLowriseCheckbox = document.getElementById('has_lowrise');
+    const lowriseFields = document.getElementById('lowrise_fields');
+    if (hasLowriseCheckbox && lowriseFields) {
+        hasLowriseCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                lowriseFields.classList.remove('hidden');
+            } else {
+                lowriseFields.classList.add('hidden');
+            }
+        });
+    }
 
     // Range slider display
     const sketchAdherence = document.getElementById('sketch_adherence');
@@ -148,6 +167,102 @@ async function handleImageUpload(event) {
     }
 }
 
+// ============== ANALYZE SKETCH ==============
+async function analyzeSketch() {
+    if (!currentSketchImage) {
+        showError('renderError', 'Vui lòng upload sketch trước!');
+        return;
+    }
+
+    const analyzeButton = document.getElementById('analyzeSketchButton');
+    const analyzeButtonText = document.getElementById('analyzeButtonText');
+    const analyzeSpinner = document.getElementById('analyzeSpinner');
+
+    analyzeButton.disabled = true;
+    analyzeButtonText.textContent = 'Đang phân tích...';
+    showSpinner('analyzeSpinner', true);
+    hideError('renderError');
+
+    console.log('🔍 Analyzing sketch...');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/planning/analyze-sketch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_base64: currentSketchImage
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Analyze failed');
+        }
+
+        const data = await response.json();
+        console.log('✅ Analysis complete:', data);
+
+        // Fill form with analyzed data
+        fillFormFromAnalysis(data.analysis);
+
+        showSuccess('renderSuccess', '✅ Đã phân tích sketch thành công! Vui lòng kiểm tra và điều chỉnh các trường nếu cần.');
+        setTimeout(() => hideSuccess('renderSuccess'), 5000);
+
+    } catch (error) {
+        console.error('❌ Analyze failed:', error);
+        showError('renderError', `Lỗi phân tích: ${error.message}`);
+    } finally {
+        analyzeButton.disabled = false;
+        analyzeButtonText.textContent = 'Phân tích Sketch (Analyze)';
+        showSpinner('analyzeSpinner', false);
+    }
+}
+
+// ============== FILL FORM FROM ANALYSIS ==============
+function fillFormFromAnalysis(analysis) {
+    // Basic info
+    if (analysis.scale) {
+        document.getElementById('scale').value = analysis.scale;
+    }
+    if (analysis.project_type) {
+        document.getElementById('project_type').value = analysis.project_type;
+    }
+    if (analysis.overall_description) {
+        document.getElementById('overall_description').value = analysis.overall_description;
+    }
+
+    // High-rise zone
+    if (analysis.highrise_zone) {
+        const hr = analysis.highrise_zone;
+        if (hr.count) document.getElementById('highrise_count').value = hr.count;
+        if (hr.floors) document.getElementById('highrise_floors').value = hr.floors;
+        if (hr.style) document.getElementById('highrise_style').value = hr.style;
+        if (hr.colors) document.getElementById('highrise_colors').value = hr.colors;
+        if (hr.features) document.getElementById('highrise_features').value = hr.features;
+    }
+
+    // Low-rise zone
+    if (analysis.lowrise_zone && analysis.lowrise_zone.exists) {
+        document.getElementById('has_lowrise').checked = true;
+        document.getElementById('lowrise_fields').classList.remove('hidden');
+
+        const lr = analysis.lowrise_zone;
+        if (lr.floors) document.getElementById('lowrise_floors').value = lr.floors;
+        if (lr.style) document.getElementById('lowrise_style').value = lr.style;
+        if (lr.colors) document.getElementById('lowrise_colors').value = lr.colors;
+    }
+
+    // Landscape
+    if (analysis.landscape) {
+        const land = analysis.landscape;
+        if (land.green_spaces) document.getElementById('green_spaces').value = land.green_spaces;
+        if (land.tree_type) document.getElementById('tree_type').value = land.tree_type;
+        if (land.road_pattern) document.getElementById('road_pattern').value = land.road_pattern;
+    }
+
+    console.log('✅ Form filled from analysis');
+}
+
 // ============== COLLECT FORM DATA ==============
 function collectFormData() {
     const qualityPresets = {
@@ -161,16 +276,127 @@ function collectFormData() {
         desaturate: document.getElementById('quality_desaturate').checked
     };
 
+    // Check if custom description is provided (overrides structured)
+    const customDescription = document.getElementById('custom_description').value.trim();
+
+    let planning_description;
+    if (customDescription) {
+        // Use custom description directly
+        planning_description = customDescription;
+    } else {
+        // Build from structured fields
+        planning_description = buildDescriptionFromFields();
+    }
+
     return {
-        planning_description: document.getElementById('planning_description').value,
+        planning_description: planning_description,
         camera_angle: document.getElementById('camera_angle').value,
         time_of_day: document.getElementById('time_of_day').value,
         weather: document.getElementById('weather').value,
         quality_level: document.getElementById('quality_level').value,
         quality_presets: qualityPresets,
         sketch_adherence: parseFloat(document.getElementById('sketch_adherence').value),
-        aspect_ratio: aspectRatioSelect.value
+        aspect_ratio: aspectRatioSelect.value,
+        // Also include structured data for backend
+        structured_data: {
+            scale: document.getElementById('scale').value,
+            project_type: document.getElementById('project_type').value,
+            overall_description: document.getElementById('overall_description').value,
+            highrise_zone: {
+                count: document.getElementById('highrise_count').value,
+                floors: document.getElementById('highrise_floors').value,
+                style: document.getElementById('highrise_style').value,
+                colors: document.getElementById('highrise_colors').value,
+                features: document.getElementById('highrise_features').value
+            },
+            lowrise_zone: {
+                exists: document.getElementById('has_lowrise').checked,
+                floors: document.getElementById('lowrise_floors').value,
+                style: document.getElementById('lowrise_style').value,
+                colors: document.getElementById('lowrise_colors').value
+            },
+            landscape: {
+                green_spaces: document.getElementById('green_spaces').value,
+                tree_type: document.getElementById('tree_type').value,
+                road_pattern: document.getElementById('road_pattern').value,
+                context: {
+                    people: document.getElementById('context_people').checked,
+                    vehicles: document.getElementById('context_vehicles').checked,
+                    skyline: document.getElementById('context_skyline').checked,
+                    water: document.getElementById('context_water').checked
+                }
+            }
+        }
     };
+}
+
+// ============== BUILD DESCRIPTION FROM STRUCTURED FIELDS ==============
+function buildDescriptionFromFields() {
+    const parts = [];
+
+    // Scale and type
+    const scale = document.getElementById('scale').value;
+    const projectType = document.getElementById('project_type').options[document.getElementById('project_type').selectedIndex].text;
+    parts.push(`Quy hoạch ${scale} ${projectType}`);
+
+    // Overall description
+    const overall = document.getElementById('overall_description').value.trim();
+    if (overall) {
+        parts.push(overall);
+    }
+
+    // High-rise zone
+    const hrCount = document.getElementById('highrise_count').value.trim();
+    const hrFloors = document.getElementById('highrise_floors').value.trim();
+    const hrStyle = document.getElementById('highrise_style').options[document.getElementById('highrise_style').selectedIndex].text;
+    const hrColors = document.getElementById('highrise_colors').value.trim();
+    const hrFeatures = document.getElementById('highrise_features').value.trim();
+
+    if (hrCount || hrFloors) {
+        let hrPart = 'Phân khu cao tầng:';
+        if (hrCount) hrPart += ` ${hrCount} tòa`;
+        if (hrFloors) hrPart += `, mỗi tòa ${hrFloors} tầng`;
+        hrPart += `. ${hrStyle}`;
+        if (hrColors) hrPart += `, màu sắc: ${hrColors}`;
+        if (hrFeatures) hrPart += `. Đặc điểm: ${hrFeatures}`;
+        parts.push(hrPart);
+    }
+
+    // Low-rise zone
+    if (document.getElementById('has_lowrise').checked) {
+        const lrFloors = document.getElementById('lowrise_floors').value.trim();
+        const lrStyle = document.getElementById('lowrise_style').options[document.getElementById('lowrise_style').selectedIndex].text;
+        const lrColors = document.getElementById('lowrise_colors').value.trim();
+
+        let lrPart = 'Phân khu thấp tầng:';
+        if (lrFloors) lrPart += ` ${lrFloors} tầng`;
+        lrPart += `. ${lrStyle}`;
+        if (lrColors) lrPart += `, ${lrColors}`;
+        parts.push(lrPart);
+    }
+
+    // Landscape
+    const greenSpaces = document.getElementById('green_spaces').value.trim();
+    const treeType = document.getElementById('tree_type').options[document.getElementById('tree_type').selectedIndex].text;
+    const roadPattern = document.getElementById('road_pattern').options[document.getElementById('road_pattern').selectedIndex].text;
+
+    let landPart = 'Cảnh quan:';
+    if (greenSpaces) landPart += ` ${greenSpaces}.`;
+    landPart += ` Cây xanh: ${treeType}. Giao thông: ${roadPattern}`;
+    parts.push(landPart);
+
+    // Context
+    const contextParts = [];
+    if (document.getElementById('context_people').checked) contextParts.push('người đi bộ (motion blur)');
+    if (document.getElementById('context_vehicles').checked) contextParts.push('xe hơi (motion blur)');
+    if (document.getElementById('context_skyline').checked) contextParts.push('city skyline phía xa');
+    if (document.getElementById('context_water').checked) contextParts.push('water features');
+
+    if (contextParts.length > 0) {
+        parts.push(`Context: ${contextParts.join(', ')}`);
+    }
+
+    return parts.join('. ') + '.';
 }
 
 // ============== GENERATE RENDER ==============
@@ -185,10 +411,13 @@ async function generateRender() {
         return;
     }
 
-    // Validate required fields
-    const planningDesc = document.getElementById('planning_description').value.trim();
-    if (!planningDesc) {
-        showError('renderError', 'Vui lòng điền mô tả tổng thể quy hoạch!');
+    // Validate: either custom description OR structured fields must have content
+    const customDesc = document.getElementById('custom_description').value.trim();
+    const overallDesc = document.getElementById('overall_description').value.trim();
+    const hasHighrise = document.getElementById('highrise_count').value.trim() || document.getElementById('highrise_floors').value.trim();
+
+    if (!customDesc && !overallDesc && !hasHighrise) {
+        showError('renderError', 'Vui lòng điền thông tin (nhấn Analyze hoặc điền thủ công)!');
         return;
     }
 

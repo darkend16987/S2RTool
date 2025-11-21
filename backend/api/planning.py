@@ -132,6 +132,94 @@ def planning_render():
         return jsonify({"error": str(e)}), 500
 
 
+@planning_bp.route('/planning/analyze-sketch', methods=['POST'])
+def analyze_sketch():
+    """
+    Analyze planning sketch and extract structured information
+
+    Request:
+    {
+        "image_base64": "data:image/png;base64,..."
+    }
+
+    Response:
+    {
+        "analysis": {
+            "scale": "1:500",
+            "project_type": "mixed_use",
+            "overall_description": "...",
+            "highrise_zone": {...},
+            "lowrise_zone": {...},
+            "landscape": {...}
+        }
+    }
+    """
+    try:
+        # Get thread-local instances
+        processor = get_image_processor()
+        prompt_builder = get_prompt_builder()
+        gemini = get_gemini_client()
+
+        data = request.json
+
+        # Validate required fields
+        if 'image_base64' not in data:
+            return jsonify({"error": "Missing image_base64"}), 400
+
+        # Process sketch image
+        sketch_pil, _ = processor.process_base64_image(data['image_base64'])
+        if not sketch_pil:
+            return jsonify({"error": "Invalid sketch image"}), 400
+
+        # Resize if needed
+        sketch_pil = processor.resize_image(sketch_pil, max_size=2048)
+
+        # Build analyze prompt
+        analyze_prompt = prompt_builder.build_planning_analyze_prompt()
+
+        print(f"🔍 Analyzing planning sketch...")
+
+        # Call Gemini with text generation (JSON response)
+        analysis_text = gemini.generate_text(
+            prompt=analyze_prompt,
+            image=sketch_pil,
+            temperature=0.2  # Low temperature for structured output
+        )
+
+        print(f"📊 Raw analysis: {analysis_text[:200]}...")
+
+        # Parse JSON response
+        import json
+        try:
+            analysis = json.loads(analysis_text)
+        except json.JSONDecodeError:
+            # Try to extract JSON if wrapped in markdown
+            import re
+            json_match = re.search(r'```json\s*(.*?)\s*```', analysis_text, re.DOTALL)
+            if json_match:
+                analysis = json.loads(json_match.group(1))
+            else:
+                # Fallback: try to find JSON object
+                json_match = re.search(r'\{.*\}', analysis_text, re.DOTALL)
+                if json_match:
+                    analysis = json.loads(json_match.group(0))
+                else:
+                    return jsonify({"error": "Failed to parse analysis response"}), 500
+
+        print("✅ Planning sketch analyzed successfully")
+
+        return jsonify({
+            "analysis": analysis
+        })
+
+    except Exception as e:
+        print(f"❌ [PLANNING_ANALYZE_ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+        return jsonify({"error": str(e)}), 500
+
+
 @planning_bp.route('/planning/detail-render', methods=['POST'])
 def planning_detail_render():
     """
@@ -209,12 +297,25 @@ def planning_detail_render():
         )
 
         print(f"🌆 Generating planning detail render...")
-        print(f"   Description: {planning_description[:50]}...")
+        print(f"   Description: {planning_description[:80]}...")
         print(f"   Camera: {camera_angle}")
         print(f"   Time: {time_of_day}, Weather: {weather}")
         print(f"   Quality Level: {quality_level}")
         print(f"   Adherence: {sketch_adherence}")
         print(f"   Aspect ratio: {aspect_ratio}")
+
+        # Log structured data if provided (for debugging/monitoring)
+        structured_data = planning_data.get('structured_data')
+        if structured_data:
+            print(f"   📊 Structured Data:")
+            print(f"      Scale: {structured_data.get('scale', 'N/A')}")
+            print(f"      Project Type: {structured_data.get('project_type', 'N/A')}")
+            hr = structured_data.get('highrise_zone', {})
+            if hr.get('count'):
+                print(f"      High-rise: {hr.get('count')} tòa, {hr.get('floors')} tầng")
+            lr = structured_data.get('lowrise_zone', {})
+            if lr.get('exists'):
+                print(f"      Low-rise: {lr.get('floors')} tầng")
 
         # Generate with Gemini
         generated_pil = gemini.generate_image(
