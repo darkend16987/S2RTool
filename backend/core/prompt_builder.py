@@ -233,6 +233,9 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
    ✓ Atmospheric effects appropriate to weather
    ✓ Sky and ambience matching conditions
 
+4.5. **QUALITY MODE**:
+   {quality_note}
+
 5. **MATERIALS & TEXTURES** (Photorealistic Quality):
    ⚠️ Note: At planning scale 1:500, maintain overall material quality without micro-details
 
@@ -627,6 +630,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         camera_angle: str = "match_sketch",
         time_of_day: str = "golden_hour",
         weather: str = "clear",
+        quality_level: str = "high_fidelity",
         quality_presets: dict = None,
         sketch_adherence: float = 0.90,
         aspect_ratio: str = "16:9"
@@ -639,7 +643,8 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             camera_angle: Aerial perspective
             time_of_day: Time of day for lighting
             weather: Weather conditions
-            quality_presets: Dict of render quality options
+            quality_level: Quality level preset (standard/high_fidelity/ultra_realism)
+            quality_presets: Dict of render quality options (can override quality_level)
             sketch_adherence: How strictly to follow sketch (0.5-1.0)
             aspect_ratio: Target aspect ratio
 
@@ -701,15 +706,29 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         time_desc = time_descriptions.get(time_of_day, time_descriptions["golden_hour"])
         weather_desc = weather_descriptions.get(weather, weather_descriptions["clear"])
 
-        # Interior lighting logic based on time of day
+        # Quality level adjustments
+        quality_notes = {
+            "standard": "⚡ SPEED MODE: Use basic materials, fewer effects, prioritize render speed. Simplified textures acceptable.",
+            "high_fidelity": "🎯 BALANCED MODE: Full photorealistic materials and effects as specified. Professional architectural visualization quality.",
+            "ultra_realism": "💎 ULTRA MODE: MAXIMUM detail and realism. Enhanced atmospheric effects, micro-variations in materials, professional photography quality. Pay extra attention to all material details, reflections, and subtle environmental effects."
+        }
+        quality_note = quality_notes.get(quality_level, quality_notes["high_fidelity"])
+
+        # Interior lighting logic based on time of day (enhanced for ultra_realism)
         if time_of_day in ['evening', 'night']:
             interior_lighting = "Varied pattern: 60-80% of apartments lit (people are home), random warm glow through windows"
+            if quality_level == "ultra_realism":
+                interior_lighting += ", with visible color temperature variations (2700K-3000K), curtain silhouettes, occasional TV flicker"
         elif time_of_day in ['golden_hour', 'afternoon']:
             interior_lighting = "Varied pattern: 20-30% of apartments lit (some early returns), subtle interior glow"
+            if quality_level == "ultra_realism":
+                interior_lighting += ", mix of warm and cool lights, realistic dimming variations"
         else:  # morning, midday
             interior_lighting = "Minimal interior lights (daytime), mostly natural light, few apartments lit"
+            if quality_level == "ultra_realism":
+                interior_lighting += ", with strong interior-exterior light contrast visible through glass"
 
-        # Rooftop details logic based on camera angle
+        # Rooftop details logic based on camera angle (enhanced for ultra_realism)
         aerial_angles = ['drone_45deg', 'birds_eye', 'drone_30deg']
         if camera_angle in aerial_angles or camera_angle == 'match_sketch':
             rooftop_details = """✓ Rooftop Details (CRITICAL for aerial views):
@@ -719,6 +738,8 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
    - Lightning rods
    - Maintenance equipment/service areas
    - ⚠️ Rooftops MUST NOT be empty flat surfaces - these are functional spaces"""
+            if quality_level == "ultra_realism":
+                rooftop_details += "\n   - ULTRA: Add weathering, maintenance access paths, cable runs, subtle rust/patina on metal elements"
         else:
             rooftop_details = "✓ Rooftop elements visible if angle permits (not priority for street-level views)"
 
@@ -728,6 +749,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             camera_angle=camera_desc,
             time_of_day=time_desc,
             weather=weather_desc,
+            quality_note=quality_note,
             interior_lighting=interior_lighting,
             rooftop_details=rooftop_details,
             render_effects=render_effects,

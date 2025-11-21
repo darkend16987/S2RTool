@@ -163,6 +163,26 @@
                     </div>
                 </details>
 
+                <!-- Quality Level Selector -->
+                <div class="form-group">
+                    <label for="quality_level">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                        Mức độ chất lượng (Quality Level)
+                    </label>
+                    <select id="quality_level">
+                        <option value="standard">Standard - Nhanh (Basic materials, fewer effects)</option>
+                        <option value="high_fidelity" selected>High Fidelity - Cân bằng (Most features enabled)</option>
+                        <option value="ultra_realism">Ultra Realism - Chậm (All effects, maximum detail)</option>
+                    </select>
+                    <small style="color: #64748b; font-size: 0.875rem; display: block; margin-top: 0.25rem;">
+                        💡 Quality Level tự động điều chỉnh các preset bên dưới
+                    </small>
+                </div>
+
                 <!-- Render Quality Presets -->
                 <details class="form-section" open>
                     <summary>
@@ -170,6 +190,9 @@
                         Chất lượng Render (Quality Presets)
                     </summary>
                     <div class="section-content">
+                        <small style="color: #64748b; font-size: 0.875rem; display: block; margin-bottom: 0.75rem;">
+                            Các preset này được tự động điều chỉnh theo Quality Level, nhưng bạn có thể tùy chỉnh thêm.
+                        </small>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                                 <input type="checkbox" id="quality_gi" checked style="width: 18px; height: 18px;">

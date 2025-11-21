@@ -58,6 +58,63 @@ function setupEventListeners() {
             sketchAdherenceValue.textContent = e.target.value;
         });
     }
+
+    // Quality level auto-preset
+    const qualityLevelSelect = document.getElementById('quality_level');
+    if (qualityLevelSelect) {
+        qualityLevelSelect.addEventListener('change', (e) => {
+            applyQualityPreset(e.target.value);
+        });
+    }
+}
+
+// ============== QUALITY PRESETS ==============
+function applyQualityPreset(level) {
+    const presets = {
+        standard: {
+            global_illumination: true,
+            soft_shadows: true,
+            hdri_sky: false,
+            reflections: true,
+            depth_of_field: false,
+            bloom: false,
+            color_correction: true,
+            desaturate: false
+        },
+        high_fidelity: {
+            global_illumination: true,
+            soft_shadows: true,
+            hdri_sky: true,
+            reflections: true,
+            depth_of_field: true,
+            bloom: true,
+            color_correction: true,
+            desaturate: true
+        },
+        ultra_realism: {
+            global_illumination: true,
+            soft_shadows: true,
+            hdri_sky: true,
+            reflections: true,
+            depth_of_field: true,
+            bloom: true,
+            color_correction: true,
+            desaturate: true
+        }
+    };
+
+    const preset = presets[level] || presets.high_fidelity;
+
+    document.getElementById('quality_gi').checked = preset.global_illumination;
+    document.getElementById('quality_shadows').checked = preset.soft_shadows;
+    document.getElementById('quality_hdri').checked = preset.hdri_sky;
+    document.getElementById('quality_reflection').checked = preset.reflections;
+    document.getElementById('quality_dof').checked = preset.depth_of_field;
+    document.getElementById('quality_bloom').checked = preset.bloom;
+    document.getElementById('quality_color_correction').checked = preset.color_correction;
+    document.getElementById('quality_desaturate').checked = preset.desaturate;
+
+    console.log(`✅ Applied ${level} quality preset`);
 }
 
 // ============== IMAGE UPLOAD ==============
@@ -109,6 +166,7 @@ function collectFormData() {
         camera_angle: document.getElementById('camera_angle').value,
         time_of_day: document.getElementById('time_of_day').value,
         weather: document.getElementById('weather').value,
+        quality_level: document.getElementById('quality_level').value,
         quality_presets: qualityPresets,
         sketch_adherence: parseFloat(document.getElementById('sketch_adherence').value),
         aspect_ratio: aspectRatioSelect.value
