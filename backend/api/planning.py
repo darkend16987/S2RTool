@@ -180,33 +180,13 @@ def analyze_sketch():
         print(f"🔍 Analyzing planning sketch...")
 
         # Call Gemini with text generation (JSON response)
-        analysis_text = gemini.generate_text(
-            prompt=analyze_prompt,
-            image=sketch_pil,
+        analysis = gemini.generate_content_json(
+            prompt_parts=[analyze_prompt, sketch_pil],
+            model_name='gemini-2.0-flash-exp',  # Use flash for analysis
             temperature=0.2  # Low temperature for structured output
         )
 
-        print(f"📊 Raw analysis: {analysis_text[:200]}...")
-
-        # Parse JSON response
-        import json
-        try:
-            analysis = json.loads(analysis_text)
-        except json.JSONDecodeError:
-            # Try to extract JSON if wrapped in markdown
-            import re
-            json_match = re.search(r'```json\s*(.*?)\s*```', analysis_text, re.DOTALL)
-            if json_match:
-                analysis = json.loads(json_match.group(1))
-            else:
-                # Fallback: try to find JSON object
-                json_match = re.search(r'\{.*\}', analysis_text, re.DOTALL)
-                if json_match:
-                    analysis = json.loads(json_match.group(0))
-                else:
-                    return jsonify({"error": "Failed to parse analysis response"}), 500
-
-        print("✅ Planning sketch analyzed successfully")
+        print(f"✅ Planning sketch analyzed successfully")
 
         return jsonify({
             "analysis": analysis
