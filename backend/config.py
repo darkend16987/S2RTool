@@ -28,7 +28,7 @@ class Models:
     """Gemini model names"""
     FLASH = "gemini-2.5-flash"  # Fast text generation
     PRO = "gemini-2.5-pro"  # Advanced reasoning
-    FLASH_IMAGE = "gemini-2.5-flash-image"  # Image generation (using Flash model)
+    FLASH_IMAGE = "gemini-3-pro-image-preview"  # Image generation (latest model)
 
 
 # ============== Server Config ==============
@@ -96,12 +96,13 @@ class Defaults:
     IMAGE_NUM_STEPS = 40
 
 # ============== Aspect Ratios ==============
+# Updated to use Gemini 3.0's higher resolution capabilities
 ASPECT_RATIOS: Dict[str, Tuple[int, int]] = {
-    "1:1": (1024, 1024),
-    "3:4": (768, 1024),
-    "4:3": (1024, 768),
-    "9:16": (576, 1024),
-    "16:9": (1024, 576)
+    "1:1": (2048, 2048),      # Square - Master plan, elevations (4.2MP)
+    "3:4": (1536, 2048),      # Portrait 3:4 (3.1MP)
+    "4:3": (2048, 1536),      # Landscape 4:3 (3.1MP)
+    "9:16": (1152, 2048),     # Portrait - Tall buildings (2.4MP)
+    "16:9": (2048, 1152)      # Landscape - Wide shots, panoramas (2.4MP)
 }
 
 # Alias for backward compatibility
@@ -317,7 +318,8 @@ Phân tích sketch kiến trúc và trả về mô tả chi tiết bằng tiến
 OUTPUT FORMAT (JSON):
 {
     "building_type": "Loại công trình (VD: Nhà phố, Biệt thự, Cao ốc...)",
-    "floor_count": "Số tầng CHÍNH XÁC (VD: 2, 3, 4... hoặc '2 tầng + 1 tum' nếu có tầng lửng/tum)",
+    "floor_count": "Số tầng CHÍNH (là số nguyên, VD: 2, 3, 4, 10...)",
+    "floor_details": "Mô tả chi tiết tầng (nếu phức tạp, VD: 'Tháp 1: đế 4 tầng + thân 10 tầng, Tháp 2: 8 tầng' hoặc '3 tầng + 1 tum' - để trống nếu đơn giản)",
     "facade_style": "Phong cách kiến trúc (VD: Hiện đại, Tân cổ điển, Đông Dương...)",
     "critical_elements": [
         {
@@ -368,6 +370,7 @@ INPUT FORMAT (Vietnamese JSON):
 {
     "building_type": "Loại công trình",
     "floor_count": "Số tầng",
+    "floor_details": "Mô tả chi tiết tầng (optional)",
     "facade_style": "Phong cách",
     "critical_elements": [...],
     "materials_precise": [...],
@@ -380,7 +383,8 @@ INPUT FORMAT (Vietnamese JSON):
 OUTPUT FORMAT (English JSON):
 {
     "building_type": "Building type in English",
-    "floor_count": "EXACT floor count (e.g., '3 floors', '2 floors + mezzanine')",
+    "floor_count": "EXACT floor count as integer (e.g., 3, 10, 25)",
+    "floor_details": "Detailed floor description in English (e.g., 'Tower 1: 4-floor podium + 10-floor body, Tower 2: 8 floors' or '3 floors + mezzanine' - empty if simple)",
     "facade_style": "Architectural style in English",
     "critical_elements": [
         {
@@ -420,6 +424,7 @@ TRANSLATION RULES:
 
 CRITICAL REQUIREMENTS:
 ⚠️ **FLOOR COUNT MUST BE PRESERVED EXACTLY** - This is the MOST CRITICAL architectural constraint!
+⚠️ **FLOOR DETAILS MUST BE TRANSLATED ACCURATELY** - If provided, translate the detailed floor description precisely
 ⚠️ TRANSLATE **EVERY SINGLE ITEM** IN ARRAYS - DO NOT SKIP OR MERGE!
    - If input has 7 environment items → output MUST have 7 environment items
    - If input has 5 materials → output MUST have 5 materials

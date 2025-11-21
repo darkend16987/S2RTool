@@ -192,6 +192,117 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
 
     # ============== PLANNING MODE PROMPTS ==============
 
+    PLANNING_DETAIL_PROMPT = """
+**ROLE**: You are an expert AI urban planning visualization specialist.
+
+**CRITICAL CONTEXT**: This is SKETCH-TO-RENDER for detailed planning. The sketch shows EXISTING BUILDINGS already drawn. You must TRANSFORM the sketch into photorealistic render while PRESERVING shapes, proportions, and layout precisely.
+
+**INPUT**: Planning sketch showing multiple buildings/structures already drawn
+
+**YOUR TASK - Transform Sketch to Photorealistic Render**:
+
+1. **PRESERVE SHAPES & PROPORTIONS** (Priority 1 - ABSOLUTE REQUIREMENT):
+   ⚠️ This is the MOST CRITICAL requirement!
+   ✓ Maintain EXACT building shapes from sketch (±3% tolerance max)
+   ✓ Preserve EXACT building-to-building scale ratios
+   ✓ Keep EXACT layout and spatial relationships
+   ✓ Respect all lot boundaries and setbacks shown
+   ✓ Maintain building footprints precisely
+   ✗ DO NOT alter building shapes to "improve" design
+   ✗ DO NOT change height proportions
+   ✗ DO NOT merge or split buildings
+   ✗ DO NOT adjust spacing between buildings
+
+2. **PLANNING DESCRIPTION**:
+   {planning_description}
+   ⚠️ Use this ONLY as context - shapes must match sketch!
+
+3. **CAMERA & COMPOSITION**:
+   Camera Angle: {camera_angle}
+   Aspect Ratio: {aspect_ratio}
+   ✓ Show entire development clearly
+   ✓ Maintain specified aerial perspective
+   ✓ Clear view of layout relationships
+   ✓ Professional framing and composition
+
+4. **TIME & ATMOSPHERE**:
+   Time of Day: {time_of_day}
+   Weather: {weather}
+   ✓ Apply realistic lighting for specified time
+   ✓ Natural shadows respecting sun angle
+   ✓ Atmospheric effects appropriate to weather
+   ✓ Sky and ambience matching conditions
+
+5. **MATERIALS & TEXTURES** (Photorealistic Quality):
+
+   Glass Facades:
+   - High reflection (70-80%)
+   - Low roughness (0.1-0.2)
+   - Environment reflections visible
+   - Subtle tint/color if appropriate
+
+   Concrete:
+   - Displacement mapping for texture
+   - Heavy, grounded appearance
+   - Slight weathering/imperfections
+   - Natural color variation
+
+   Wood Cladding:
+   - Natural grain visible
+   - Warm tones
+   - Slight texture variation
+
+   Metal Panels:
+   - High reflectivity (60-70%)
+   - Sharp highlights
+   - Industrial appearance
+
+6. **RENDER EFFECTS** (Apply based on quality presets):
+   {render_effects}
+
+7. **URBAN CONTEXT & DETAILS**:
+   ✓ Streets and roads between buildings
+   ✓ Sidewalks and pathways
+   ✓ Landscaping (trees, grass, shrubs)
+   ✓ Green spaces and plazas
+   ✓ Parking areas if visible
+   ✓ People at appropriate scale (small from aerial view)
+   ✓ Vehicles sized correctly
+   ✓ Street furniture (lights, benches, signs)
+   ✓ Water features if applicable
+
+8. **PHOTOREALISTIC QUALITY**:
+   ✓ Natural depth of field (slight blur for distance)
+   ✓ Realistic material properties
+   ✓ Accurate light bouncing and shadows
+   ✓ Subtle imperfections for realism
+   ✓ Professional architectural photography feel
+   ✓ Cinematic color grading
+
+9. **SKETCH ADHERENCE**:
+   Fidelity Level: {sketch_adherence}
+   ⚠️ At 0.90+ fidelity, shape preservation is ABSOLUTE
+   ⚠️ Even at 0.5 fidelity, basic proportions must match
+
+**OUTPUT FORMAT**:
+✓ Single photorealistic aerial rendering
+✓ Aspect ratio: {aspect_ratio}
+✓ Professional architectural visualization quality
+✗ No text labels or annotations
+✗ No watermarks or overlays
+
+**OUTPUT**: Photorealistic planning visualization showing the entire development from {camera_angle} perspective at {time_of_day} with {weather} conditions, all building shapes and proportions precisely matching the source sketch.
+
+**VERIFICATION CHECKLIST**:
+- [ ] All building shapes match sketch precisely
+- [ ] Building-to-building proportions preserved
+- [ ] Layout and spacing unchanged
+- [ ] Materials are photorealistic
+- [ ] Lighting matches time of day
+- [ ] Aerial perspective is clear
+- [ ] Context elements enhance realism
+"""
+
     PLANNING_RENDER_PROMPT = """
 **ROLE**: You are an expert AI urban planning visualization specialist.
 
@@ -321,18 +432,25 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
 
         building_type = translated_data_en.get('building_type', 'building')
 
-        # ✅ NEW: Format floor count from integer + mezzanine flag
+        # ✅ NEW: Format floor count from integer + optional floor_details
         floor_num = translated_data_en.get('floor_count', 3)
+        floor_details = translated_data_en.get('floor_details', '').strip()
         has_mezzanine = translated_data_en.get('has_mezzanine', False)
 
         # Build clear, unambiguous floor count string
         if isinstance(floor_num, int):
             floor_count = f"EXACTLY {floor_num} {'floor' if floor_num == 1 else 'floors'}"
-            if has_mezzanine:
+
+            # Add floor details if provided (takes precedence over mezzanine flag)
+            if floor_details:
+                floor_count += f" ({floor_details})"
+            elif has_mezzanine:
                 floor_count += " plus one mezzanine/loft level"
         else:
             # Fallback for old string format (backward compatible)
             floor_count = str(floor_num)
+            if floor_details:
+                floor_count += f" ({floor_details})"
 
         facade_style = translated_data_en.get('facade_style', 'modern architecture')
         materials = translated_data_en.get('materials_precise', [])
@@ -484,6 +602,99 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             time_of_day=time_desc,
             aspect_ratio=aspect_ratio,
             style_keywords=style_text
+        )
+
+        return prompt
+
+    @classmethod
+    def build_planning_detail_prompt(
+        cls,
+        planning_description: str,
+        camera_angle: str = "drone_45deg",
+        time_of_day: str = "golden_hour",
+        weather: str = "clear",
+        quality_presets: dict = None,
+        sketch_adherence: float = 0.90,
+        aspect_ratio: str = "16:9"
+    ) -> str:
+        """
+        Build planning detail render prompt
+
+        Args:
+            planning_description: Overall planning description
+            camera_angle: Aerial perspective
+            time_of_day: Time of day for lighting
+            weather: Weather conditions
+            quality_presets: Dict of render quality options
+            sketch_adherence: How strictly to follow sketch (0.5-1.0)
+            aspect_ratio: Target aspect ratio
+
+        Returns:
+            Formatted planning detail prompt
+        """
+        # Camera angle descriptions
+        camera_angles = {
+            "drone_45deg": "Drone view at 45° angle (oblique aerial view showing both horizontal layout and building heights)",
+            "birds_eye": "Bird's eye view (90° directly overhead, pure plan view)",
+            "drone_30deg": "Low drone view at 30° (closer to ground, more dramatic building heights)",
+            "eye_level": "Eye-level street view (human perspective from ground level)"
+        }
+
+        # Time of day descriptions
+        time_descriptions = {
+            "golden_hour": "Golden hour (warm sunset/sunrise lighting, long soft shadows, warm tones)",
+            "morning": "Early morning (soft diffused light, cool fresh tones, long shadows)",
+            "midday": "Midday (bright overhead sun, short sharp shadows, high contrast)",
+            "afternoon": "Late afternoon (warm angled light, medium shadows)",
+            "evening": "Evening/dusk (artificial lights ON, blue hour, soft ambient glow)",
+            "night": "Night (dark sky, artificial lights dominant, dramatic contrast)"
+        }
+
+        # Weather descriptions
+        weather_descriptions = {
+            "clear": "Clear sky (bright, sunny, high visibility)",
+            "cloudy": "Overcast/cloudy (diffused soft lighting, minimal shadows)",
+            "light_rain": "Light rain (wet surfaces, reflections, atmospheric haze)",
+            "foggy": "Foggy/misty (reduced visibility, atmospheric depth, soft diffusion)"
+        }
+
+        # Build render effects list based on quality presets
+        if quality_presets is None:
+            quality_presets = {}
+
+        effects_list = []
+        if quality_presets.get('global_illumination', True):
+            effects_list.append("✓ Global Illumination (realistic light bouncing, ambient occlusion)")
+        if quality_presets.get('soft_shadows', True):
+            effects_list.append("✓ Soft Shadows with natural penumbra")
+        if quality_presets.get('hdri_sky', True):
+            effects_list.append("✓ HDRI Sky for realistic environment lighting")
+        if quality_presets.get('reflections', True):
+            effects_list.append("✓ Accurate Reflections on glass, water, and metal surfaces")
+        if quality_presets.get('depth_of_field', True):
+            effects_list.append("✓ Depth of Field (slight background blur for aerial shots)")
+        if quality_presets.get('bloom', True):
+            effects_list.append("✓ Bloom/Lens Flare on bright surfaces (subtle, realistic)")
+        if quality_presets.get('color_correction', True):
+            effects_list.append("✓ Color Correction (professional grading, cinematic look)")
+        if quality_presets.get('desaturate', True):
+            effects_list.append("✓ Slight desaturation (-5 to -10%) for photorealism")
+
+        render_effects = "\n   ".join(effects_list) if effects_list else "Standard photorealistic rendering"
+
+        camera_desc = camera_angles.get(camera_angle, camera_angles["drone_45deg"])
+        time_desc = time_descriptions.get(time_of_day, time_descriptions["golden_hour"])
+        weather_desc = weather_descriptions.get(weather, weather_descriptions["clear"])
+
+        # Format prompt
+        prompt = cls.PLANNING_DETAIL_PROMPT.format(
+            planning_description=planning_description,
+            camera_angle=camera_desc,
+            time_of_day=time_desc,
+            weather=weather_desc,
+            render_effects=render_effects,
+            sketch_adherence=f"{sketch_adherence:.2f}",
+            aspect_ratio=aspect_ratio
         )
 
         return prompt

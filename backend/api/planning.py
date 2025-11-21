@@ -130,3 +130,118 @@ def planning_render():
         traceback.print_exc()
 
         return jsonify({"error": str(e)}), 500
+
+
+@planning_bp.route('/planning/detail-render', methods=['POST'])
+def planning_detail_render():
+    """
+    Generate planning detail render from sketch with existing buildings
+
+    Request:
+    {
+        "image_base64": "data:image/png;base64,...",
+        "planning_data": {
+            "planning_description": "Overall planning description",
+            "camera_angle": "drone_45deg",
+            "time_of_day": "golden_hour",
+            "weather": "clear",
+            "quality_presets": {
+                "global_illumination": true,
+                "soft_shadows": true,
+                ...
+            },
+            "sketch_adherence": 0.90,
+            "aspect_ratio": "16:9"
+        }
+    }
+
+    Response:
+    {
+        "generated_image_base64": "...",
+        "mime_type": "image/png",
+        "aspect_ratio": "16:9"
+    }
+    """
+    try:
+        # Get thread-local instances
+        processor = get_image_processor()
+        prompt_builder = get_prompt_builder()
+        gemini = get_gemini_client()
+
+        data = request.json
+
+        # Validate required fields
+        if 'image_base64' not in data or 'planning_data' not in data:
+            return jsonify({"error": "Missing image_base64 or planning_data"}), 400
+
+        planning_data = data['planning_data']
+        if 'planning_description' not in planning_data:
+            return jsonify({"error": "Missing planning_description"}), 400
+
+        # Process sketch image
+        sketch_pil, _ = processor.process_base64_image(data['image_base64'])
+        if not sketch_pil:
+            return jsonify({"error": "Invalid sketch image"}), 400
+
+        # Resize if needed (match new resolution capabilities)
+        sketch_pil = processor.resize_image(sketch_pil, max_size=2048)
+
+        # Extract parameters
+        planning_description = planning_data['planning_description']
+        camera_angle = planning_data.get('camera_angle', 'drone_45deg')
+        time_of_day = planning_data.get('time_of_day', 'golden_hour')
+        weather = planning_data.get('weather', 'clear')
+        quality_presets = planning_data.get('quality_presets', {})
+        sketch_adherence = planning_data.get('sketch_adherence', 0.90)
+        aspect_ratio = planning_data.get('aspect_ratio', '16:9')
+
+        # Build planning detail prompt
+        planning_prompt = prompt_builder.build_planning_detail_prompt(
+            planning_description=planning_description,
+            camera_angle=camera_angle,
+            time_of_day=time_of_day,
+            weather=weather,
+            quality_presets=quality_presets,
+            sketch_adherence=sketch_adherence,
+            aspect_ratio=aspect_ratio
+        )
+
+        print(f"🌆 Generating planning detail render...")
+        print(f"   Description: {planning_description[:50]}...")
+        print(f"   Camera: {camera_angle}")
+        print(f"   Time: {time_of_day}, Weather: {weather}")
+        print(f"   Adherence: {sketch_adherence}")
+        print(f"   Aspect ratio: {aspect_ratio}")
+
+        # Generate with Gemini
+        generated_pil = gemini.generate_image(
+            prompt=planning_prompt,
+            source_image=sketch_pil,
+            temperature=0.4
+        )
+
+        if not generated_pil:
+            return jsonify({"error": "Planning detail render generation failed"}), 500
+
+        # Convert PIL Image to base64
+        output_buffer = io.BytesIO()
+        generated_pil.save(output_buffer, format='PNG', quality=95)
+        output_base64 = base64.b64encode(output_buffer.getvalue()).decode('utf-8')
+
+        # Add data:image/png;base64, prefix
+        output_base64_full = f"data:image/png;base64,{output_base64}"
+
+        print("✅ Planning detail render complete")
+
+        return jsonify({
+            "generated_image_base64": output_base64_full,
+            "mime_type": "image/png",
+            "aspect_ratio": aspect_ratio
+        })
+
+    except Exception as e:
+        print(f"❌ [PLANNING_DETAIL_RENDER_ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+        return jsonify({"error": str(e)}), 500
