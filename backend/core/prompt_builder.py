@@ -768,92 +768,96 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         return prompt
 
     PLANNING_ANALYZE_PROMPT = """
-**ROLE**: You are an expert urban planning analyst specializing in reading architectural sketches.
+**VAI TRÒ**: Bạn là chuyên gia phân tích quy hoạch đô thị, chuyên đọc và hiểu bản vẽ kiến trúc.
 
-**CRITICAL INSTRUCTION - ANTI-HALLUCINATION**:
-⚠️ Your task is to ANALYZE what EXISTS in the sketch, NOT to suggest or imagine what could be added.
-⚠️ DO NOT count empty spaces as buildings.
-⚠️ DO NOT suggest adding buildings to empty areas.
-⚠️ ONLY describe buildings that are CLEARLY DRAWN in the sketch.
+**CHỈ DẪN QUAN TRỌNG - CHỐNG HALLUCINATION**:
+⚠️ Nhiệm vụ của bạn là PHÂN TÍCH những gì CÓ SẴN trong sketch, KHÔNG phải tưởng tượng hoặc đề xuất thêm.
+⚠️ KHÔNG đếm khoảng trống thành tòa nhà.
+⚠️ KHÔNG đề xuất thêm tòa nhà vào các khu vực trống.
+⚠️ CHỈ mô tả những tòa nhà được VẼ RÕ RÀNG trong sketch.
 
-**INPUT**: Planning sketch/drawing showing a development project
+**INPUT**: Bản vẽ quy hoạch/sketch thể hiện dự án phát triển
 
-**YOUR TASK**: Analyze the sketch and extract structured information in JSON format.
+**NHIỆM VỤ**: Phân tích sketch và trích xuất thông tin có cấu trúc dưới dạng JSON.
 
-**ANALYSIS REQUIREMENTS**:
+**YÊU CẦU PHÂN TÍCH**:
 
-1. **Scale Detection**:
-   - Look for scale indicators (1:500, 1:200, 1:150, 1:100)
-   - If no explicit scale shown, estimate based on level of detail:
-     - Minimal detail, massing only → likely 1:500
-     - Moderate detail, facades visible → likely 1:200
-     - High detail, windows visible → likely 1:150 or 1:100
-   - Return one of: "1:500", "1:200", "1:150", "1:100"
+1. **Nhận diện Tỷ lệ (Scale)**:
+   - Tìm ký hiệu tỷ lệ (1:500, 1:200, 1:150, 1:100)
+   - Nếu không có ký hiệu rõ ràng, ước lượng dựa trên mức độ chi tiết:
+     - Chi tiết tối thiểu, chỉ có khối → có thể là 1:500
+     - Chi tiết vừa, mặt đứng rõ → có thể là 1:200
+     - Chi tiết cao, cửa sổ rõ → có thể là 1:150 hoặc 1:100
+   - Trả về một trong: "1:500", "1:200", "1:150", "1:100"
 
-2. **Project Type Detection**:
-   - Identify the type of development
-   - Return one of: "mixed_use", "residential", "industrial", "resort", "campus", "commercial"
+2. **Nhận diện Loại công trình**:
+   - Xác định loại dự án phát triển
+   - Trả về một trong: "mixed_use", "residential", "industrial", "resort", "campus", "commercial"
 
-3. **Overall Description**:
-   - Brief 1-2 sentence summary of the entire project
-   - Focus on layout, composition, and overall character
+3. **Mô tả Tổng quan**:
+   - Tóm tắt ngắn gọn 1-2 câu về toàn bộ dự án BẰNG TIẾNG VIỆT
+   - Tập trung vào bố cục, cấu trúc và đặc điểm tổng thể
 
-4. **High-rise Zone Analysis**:
-   ⚠️ CRITICAL: Only count buildings that are CLEARLY DRAWN with significant height
-   - count: "X" or "X-Y" (example: "30-31", "25")
-   - floors: "X" or "X-Y" (example: "38-40", "25-30")
-   - style: "modern", "neoclassical", "minimalist", "industrial", or "tropical_modern"
-   - colors: Describe visible colors (e.g., "vàng, trắng, kính")
-   - features: Notable features like "lam chắn nắng", "ban công", "rooftop equipment"
+4. **Phân tích Phân khu Cao tầng**:
+   ⚠️ QUAN TRỌNG: Chỉ đếm các tòa nhà được VẼ RÕ RÀNG với chiều cao đáng kể
+   - count: "X" hoặc "X-Y" (ví dụ: "30-31", "25")
+   - floors: "X" hoặc "X-Y" (ví dụ: "38-40", "25-30")
+   - style: "modern", "neoclassical", "minimalist", "industrial", hoặc "tropical_modern"
+   - colors: Mô tả màu sắc nhìn thấy BẰNG TIẾNG VIỆT (ví dụ: "vàng, trắng, kính")
+   - features: Đặc điểm nổi bật BẰNG TIẾNG VIỆT (ví dụ: "lam chắn nắng, ban công, thiết bị mái")
 
-5. **Low-rise Zone Analysis**:
-   ⚠️ CRITICAL: Only detect if there are CLEARLY DRAWN low-rise buildings
-   - exists: true/false (false if no low-rise buildings visible)
-   - floors: "X" or "X-Y" if exists
-   - style: architectural style if exists
-   - colors: visible colors if exists
+5. **Phân tích Phân khu Thấp tầng**:
+   ⚠️ QUAN TRỌNG: Chỉ phát hiện nếu có các tòa nhà thấp tầng được VẼ RÕ RÀNG
+   - exists: true/false (false nếu không thấy tòa nhà thấp tầng)
+   - floors: "X" hoặc "X-Y" nếu có
+   - style: phong cách kiến trúc nếu có
+   - colors: màu sắc nhìn thấy BẰNG TIẾNG VIỆT nếu có
 
-6. **Landscape Analysis**:
-   - green_spaces: Describe visible green spaces, parks, amenities (only if shown in sketch)
-   - tree_type: "diverse", "tropical", "temperate", or "minimalist" (based on sketch style)
-   - road_pattern: "grid", "organic", "radial", or "mixed" (based on visible road layout)
+6. **Phân tích Cảnh quan**:
+   - green_spaces: Mô tả BẰNG TIẾNG VIỆT các không gian xanh, công viên, tiện ích (chỉ nếu có trong sketch)
+   - tree_type: "diverse", "tropical", "temperate", hoặc "minimalist" (dựa trên phong cách sketch)
+   - road_pattern: "grid", "organic", "radial", hoặc "mixed" (dựa trên bố trí đường nhìn thấy)
 
-**CRITICAL RULES**:
-✓ Count only buildings that are CLEARLY VISIBLE in the sketch
-✓ Use ranges (e.g., "30-31") when exact count is difficult
-✓ If uncertain, provide conservative estimates
-✗ DO NOT suggest adding buildings to empty spaces
-✗ DO NOT count empty lots as buildings
-✗ DO NOT hallucinate features not visible in sketch
+**QUY TẮC QUAN TRỌNG**:
+✓ Chỉ đếm các tòa nhà RÕ RÀNG NHÌN THẤY trong sketch
+✓ Dùng khoảng (ví dụ: "30-31") khi khó đếm chính xác
+✓ Nếu không chắc chắn, ước lượng thận trọng
+✓ TẤT CẢ các mô tả văn bản phải BẰNG TIẾNG VIỆT
+✗ KHÔNG đề xuất thêm tòa nhà vào khoảng trống
+✗ KHÔNG đếm lô đất trống thành tòa nhà
+✗ KHÔNG tưởng tượng các đặc điểm không thấy trong sketch
 
-**OUTPUT FORMAT** (JSON only):
+**ĐỊNH DẠNG OUTPUT** (CHỈ JSON):
 ```json
 {
   "scale": "1:500",
   "project_type": "mixed_use",
-  "overall_description": "Brief 1-2 sentence summary of the project",
+  "overall_description": "Khu đô thị hỗn hợp quy mô lớn với các tòa cao tầng bố trí dạng cụm và phân khu thấp tầng phía bắc.",
   "highrise_zone": {
     "count": "30-31",
     "floors": "38-40",
     "style": "modern",
     "colors": "vàng, trắng, kính",
-    "features": "lam chắn nắng, ban công, rooftop VRV"
+    "features": "lam chắn nắng, ban công, thiết bị VRV trên mái"
   },
   "lowrise_zone": {
     "exists": true,
     "floors": "3-4",
     "style": "neoclassical",
-    "colors": "mái xám, tường trắng"
+    "colors": "mái xám đen, tường trắng"
   },
   "landscape": {
-    "green_spaces": "công viên trung tâm, sân chơi",
+    "green_spaces": "công viên trung tâm, sân chơi trẻ em, sân BBQ",
     "tree_type": "diverse",
     "road_pattern": "grid"
   }
 }
 ```
 
-**IMPORTANT**: Return ONLY valid JSON. Do not add explanations outside the JSON structure.
+**QUAN TRỌNG**:
+- Trả về CHỈ JSON hợp lệ.
+- KHÔNG thêm giải thích bên ngoài cấu trúc JSON.
+- TẤT CẢ mô tả văn bản (overall_description, colors, features, green_spaces) phải BẰNG TIẾNG VIỆT.
 """
 
     @classmethod

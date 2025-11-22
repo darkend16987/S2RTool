@@ -182,7 +182,7 @@ def analyze_sketch():
         # Call Gemini with text generation (JSON response)
         analysis = gemini.generate_content_json(
             prompt_parts=[analyze_prompt, sketch_pil],
-            model_name='gemini-2.0-flash-exp',  # Use flash for analysis
+            model_name='gemini-2.5-flash',  # Use 2.5 flash for Vietnamese support
             temperature=0.2  # Low temperature for structured output
         )
 
