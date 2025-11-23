@@ -318,6 +318,33 @@
             </div>
         </div>
 
+        <!-- Replicate API Token Section -->
+        <div class="settings-section">
+            <h2>🔍 Replicate API Token (for Upscale)</h2>
+
+            <div class="form-group">
+                <label>
+                    API Token
+                    <span id="replicateTokenStatus"></span>
+                </label>
+                <div class="api-key-input">
+                    <input
+                        type="password"
+                        id="replicateTokenInput"
+                        placeholder="r8_..."
+                        autocomplete="off"
+                    >
+                </div>
+                <p class="help-text">
+                    Nhập Replicate API token để sử dụng tính năng Upscale (Real-ESRGAN).
+                    <a href="https://replicate.com/account/api-tokens" target="_blank">Lấy token tại đây</a>
+                </p>
+                <p class="help-text" style="margin-top: 0.5rem;">
+                    <strong>Cost:</strong> ~$0.025 cho 2x upscale, ~$0.045 cho 4x upscale
+                </p>
+            </div>
+        </div>
+
         <!-- Model Selection Section -->
         <div class="settings-section">
             <h2>🤖 Model Selection</h2>

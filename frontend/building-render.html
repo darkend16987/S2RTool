@@ -495,11 +495,18 @@
             <!-- Action Buttons -->
             <div class="output-actions">
                 <!-- Export JSON button will be inserted here by JS -->
-                
+
                 <button id="generateRenderButton" class="btn-submit" disabled>
                     <span id="renderSpinner" class="spinner hidden"></span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Tạo Render
+                </button>
+
+                <!-- Upscale button (hidden until render complete) -->
+                <button id="upscaleButton" class="btn-secondary hidden" style="margin-top: 0.75rem;">
+                    <span id="upscaleSpinner" class="spinner hidden"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span id="upscaleButtonText">🔍 Upscale & Download (2x)</span>
                 </button>
             </div>
             
