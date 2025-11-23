@@ -546,6 +546,7 @@ async function generateRender() {
     generateButton.disabled = true;
     hideError('renderError');
     hideSuccess('renderSuccess');
+    hideUpscaleButton(); // Hide upscale button when starting new render
 
     try {
         console.log('🎨 Generating render...');
@@ -591,6 +592,9 @@ async function generateRender() {
 
         // Display the image
         displayRenderedImage(result.generated_image_base64, result.mime_type);
+
+        // Show upscale button
+        showUpscaleButton(result.generated_image_base64);
 
         showSuccess('renderSuccess', '🎉 Render hoàn tất! Bạn có thể tải ảnh xuống bên dưới.');
         console.log('✅ Render complete');
@@ -1185,3 +1189,120 @@ function hideSuccess(id) {
     }
 }
 
+
+// ========================================
+// UPSCALE FUNCTIONALITY
+// ========================================
+
+// Note: currentRenderedImage is already declared at the top of this file (line 14)
+
+// Setup upscale button click handler
+document.addEventListener('DOMContentLoaded', () => {
+    const upscaleButton = document.getElementById('upscaleButton');
+    if (upscaleButton) {
+        upscaleButton.addEventListener('click', handleUpscale);
+    }
+});
+
+/**
+ * Handle upscale button click
+ */
+async function handleUpscale() {
+    if (!currentRenderedImage) {
+        showError('renderError', 'No rendered image to upscale');
+        return;
+    }
+
+    const upscaleButton = document.getElementById('upscaleButton');
+    const upscaleSpinner = document.getElementById('upscaleSpinner');
+    const upscaleButtonText = document.getElementById('upscaleButtonText');
+
+    try {
+        // Disable button and show loading
+        upscaleButton.disabled = true;
+        upscaleSpinner.classList.remove('hidden');
+        upscaleButtonText.textContent = 'Upscaling...';
+
+        console.log('🔍 Starting upscale...');
+
+        // Call upscale API
+        const response = await fetch(`${API_BASE_URL}/upscale`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                image_base64: currentRenderedImage,
+                scale: 2  // 2x upscale
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Upscale failed');
+        }
+
+        console.log('✅ Upscale complete!');
+        console.log(`   Original: ${data.original_resolution}`);
+        console.log(`   Upscaled: ${data.upscaled_resolution}`);
+        console.log(`   Cost: $${data.cost_estimate.toFixed(3)}`);
+
+        // Auto download upscaled image
+        downloadImage(data.upscaled_image_base64, 'upscaled-render.png');
+
+        showSuccess('renderSuccess', `✓ Upscaled to ${data.upscaled_resolution} and downloaded!`);
+
+    } catch (error) {
+        console.error('❌ Upscale error:', error);
+        showError('renderError', `Upscale error: ${error.message}`);
+    } finally {
+        // Re-enable button
+        upscaleButton.disabled = false;
+        upscaleSpinner.classList.add('hidden');
+        upscaleButtonText.textContent = '🔍 Upscale & Download (2x)';
+    }
+}
+
+/**
+ * Download image from base64
+ */
+function downloadImage(base64Data, filename) {
+    // Create download link
+    const link = document.createElement('a');
+    link.href = base64Data;
+    link.download = filename;
+
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log(`📥 Downloaded: ${filename}`);
+}
+
+/**
+ * Show upscale button when render is complete
+ * Call this after successful render
+ */
+function showUpscaleButton(renderedImageBase64) {
+    currentRenderedImage = renderedImageBase64;
+
+    const upscaleButton = document.getElementById('upscaleButton');
+    if (upscaleButton) {
+        upscaleButton.classList.remove('hidden');
+    }
+}
+
+/**
+ * Hide upscale button
+ * Call this when starting new render
+ */
+function hideUpscaleButton() {
+    currentRenderedImage = null;
+
+    const upscaleButton = document.getElementById('upscaleButton');
+    if (upscaleButton) {
+        upscaleButton.classList.add('hidden');
+    }
+}

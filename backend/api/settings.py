@@ -19,6 +19,7 @@ def get_default_config():
     """Get default configuration from config.py"""
     return {
         "api_key": os.environ.get("GEMINI_API_KEY", ""),
+        "replicate_api_token": os.environ.get("REPLICATE_API_TOKEN", ""),
         "models": {
             "building_analysis": Models.PRO,
             "planning_analysis": Models.FLASH,
@@ -108,6 +109,17 @@ def get_settings():
             else:
                 api_key_masked = api_key[:6] + "****"
 
+        # Mask Replicate API token for security
+        replicate_token = config.get("replicate_api_token", "")
+        replicate_token_configured = bool(replicate_token)
+        replicate_token_masked = ""
+
+        if replicate_token:
+            if len(replicate_token) > 10:
+                replicate_token_masked = f"{replicate_token[:6]}...{replicate_token[-4:]}"
+            else:
+                replicate_token_masked = replicate_token[:4] + "****"
+
         # Available models for selection
         available_models = {
             "text": [
@@ -126,6 +138,8 @@ def get_settings():
         return jsonify({
             "api_key_configured": api_key_configured,
             "api_key_masked": api_key_masked,
+            "replicate_token_configured": replicate_token_configured,
+            "replicate_token_masked": replicate_token_masked,
             "models": config.get("models", {}),
             "temperatures": config.get("temperatures", {}),
             "preferences": config.get("preferences", {}),
@@ -182,6 +196,21 @@ def update_settings():
             # Update environment variable for current session
             os.environ["GEMINI_API_KEY"] = api_key
             print(f"✅ API key updated (session): {api_key[:10]}...{api_key[-4:]}")
+
+        # Update Replicate API token if provided
+        if "replicate_api_token" in data and data["replicate_api_token"]:
+            # Validate Replicate token format (basic check)
+            replicate_token = data["replicate_api_token"].strip()
+            if replicate_token and not replicate_token.startswith("r8_"):
+                return jsonify({
+                    "error": "Invalid Replicate API token format. Tokens start with 'r8_'"
+                }), 400
+
+            config["replicate_api_token"] = replicate_token
+
+            # Update environment variable for current session
+            os.environ["REPLICATE_API_TOKEN"] = replicate_token
+            print(f"✅ Replicate token updated (session): {replicate_token[:6]}...{replicate_token[-4:]}")
 
         # Update models if provided
         if "models" in data:

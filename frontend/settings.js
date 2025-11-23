@@ -67,6 +67,7 @@ async function loadSettings() {
 
         // Populate UI
         populateAPIKeySection(data);
+        populateReplicateTokenSection(data);
         populateModelSelections(data);
         populateTemperatures(data.temperatures);
         populatePreferences(data.preferences);
@@ -96,6 +97,23 @@ function populateAPIKeySection(data) {
         `;
     } else {
         apiKeyStatus.innerHTML = `
+            <span class="status-badge error">✗ Not configured</span>
+        `;
+    }
+}
+
+function populateReplicateTokenSection(data) {
+    const replicateTokenInput = document.getElementById('replicateTokenInput');
+    const replicateTokenStatus = document.getElementById('replicateTokenStatus');
+
+    // Show masked Replicate token
+    if (data.replicate_token_configured) {
+        replicateTokenInput.placeholder = data.replicate_token_masked;
+        replicateTokenStatus.innerHTML = `
+            <span class="status-badge success">✓ Configured</span>
+        `;
+    } else {
+        replicateTokenStatus.innerHTML = `
             <span class="status-badge error">✗ Not configured</span>
         `;
     }
@@ -227,6 +245,7 @@ async function saveSettings() {
         // Collect settings
         const settings = {
             api_key: document.getElementById('apiKeyInput').value.trim() || undefined,
+            replicate_api_token: document.getElementById('replicateTokenInput').value.trim() || undefined,
             models: {
                 building_analysis: document.getElementById('modelBuildingAnalysis').value,
                 planning_analysis: document.getElementById('modelPlanningAnalysis').value,
@@ -263,10 +282,11 @@ async function saveSettings() {
 
         showAlert('✓ Settings saved successfully!', 'success');
 
-        // Clear API key input (security)
+        // Clear API key inputs (security)
         document.getElementById('apiKeyInput').value = '';
+        document.getElementById('replicateTokenInput').value = '';
 
-        // Reload settings to show updated masked key
+        // Reload settings to show updated masked keys
         setTimeout(() => {
             loadSettings();
         }, 1500);

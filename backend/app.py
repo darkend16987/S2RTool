@@ -22,6 +22,7 @@ from api.references import references_bp
 from api.inpaint import inpaint_bp
 from api.planning import planning_bp
 from api.settings import settings_bp
+from api.upscale import upscale_bp
 
 
 def create_app():
@@ -52,6 +53,7 @@ def create_app():
     app.register_blueprint(inpaint_bp, url_prefix='/api')      # /api/inpaint
     app.register_blueprint(planning_bp, url_prefix='/api')     # /api/planning/*
     app.register_blueprint(settings_bp, url_prefix='/api')     # /api/settings
+    app.register_blueprint(upscale_bp, url_prefix='/api')      # /api/upscale
     
     # ============== HEALTH CHECK ==============
     @app.route('/health', methods=['GET'])
@@ -80,7 +82,8 @@ def create_app():
                 "planning_render": "/api/planning/render",
                 "planning_detail_render": "/api/planning/detail-render",
                 "planning_analyze": "/api/planning/analyze-sketch",
-                "settings": "/api/settings"
+                "settings": "/api/settings",
+                "upscale": "/api/upscale"
             },
             "features": [
                 "sketch_analysis",
