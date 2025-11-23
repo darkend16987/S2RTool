@@ -21,6 +21,7 @@ from api.analyze import analyze_bp
 from api.references import references_bp
 from api.inpaint import inpaint_bp
 from api.planning import planning_bp
+from api.settings import settings_bp
 
 
 def create_app():
@@ -49,7 +50,8 @@ def create_app():
     app.register_blueprint(render_bp, url_prefix='/api')       # /api/render
     app.register_blueprint(references_bp, url_prefix='/api')   # /api/references/*
     app.register_blueprint(inpaint_bp, url_prefix='/api')      # /api/inpaint
-    app.register_blueprint(planning_bp, url_prefix='/api')     # /api/planning/render
+    app.register_blueprint(planning_bp, url_prefix='/api')     # /api/planning/*
+    app.register_blueprint(settings_bp, url_prefix='/api')     # /api/settings
     
     # ============== HEALTH CHECK ==============
     @app.route('/health', methods=['GET'])
@@ -75,7 +77,10 @@ def create_app():
                 "references_download": "/api/references/download",
                 "references_search": "/api/references/search",
                 "inpaint": "/api/inpaint",
-                "planning_render": "/api/planning/render"
+                "planning_render": "/api/planning/render",
+                "planning_detail_render": "/api/planning/detail-render",
+                "planning_analyze": "/api/planning/analyze-sketch",
+                "settings": "/api/settings"
             },
             "features": [
                 "sketch_analysis",
