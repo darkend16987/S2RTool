@@ -354,6 +354,25 @@
                                 <option value="foggy">Sương mù nhẹ</option>
                             </select>
                         </div>
+
+                        <!-- Horizon Line -->
+                        <div class="form-group">
+                            <label for="horizon_line">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="3" y1="12" x2="21" y2="12"/>
+                                    <path d="M3 17l3-3 3 3 4-4 4 4 4-4"/>
+                                </svg>
+                                Đường chân trời (Horizon Line)
+                            </label>
+                            <select id="horizon_line">
+                                <option value="ground_only" selected>Chỉ bối cảnh mặt đất (No horizon, ground context only)</option>
+                                <option value="with_horizon">Có đường chân trời (With horizon line)</option>
+                            </select>
+                            <p class="help-text" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">
+                                Chọn "Chỉ bối cảnh mặt đất" nếu góc nhìn chụp từ trên cao xuống, chỉ thấy công trình và mặt đất.
+                                Chọn "Có đường chân trời" nếu góc nhìn chụp từ xa, có thể thấy trời và đường chân trời.
+                            </p>
+                        </div>
                     </div>
                 </details>
 
@@ -460,12 +479,20 @@
                     Tạo Render
                 </button>
 
-                <!-- Upscale button (hidden until render complete) -->
-                <button id="upscaleButton" class="btn-secondary hidden" style="margin-top: 0.75rem;">
-                    <span id="upscaleSpinner" class="spinner hidden"></span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    <span id="upscaleButtonText">🔍 Upscale & Download (2x)</span>
-                </button>
+                <!-- Upscale controls (hidden until render complete) -->
+                <div id="upscaleControls" class="hidden" style="margin-top: 0.75rem;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="upscaleScale" style="padding: 0.5rem; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
+                            <option value="2">2x (4096x4096) - ~$0.025</option>
+                            <option value="4">4x (8192x8192) - ~$0.045</option>
+                        </select>
+                        <button id="upscaleButton" class="btn-secondary" style="flex: 1;">
+                            <span id="upscaleSpinner" class="spinner hidden"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <span id="upscaleButtonText">🔍 Upscale & Download</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Messages -->

@@ -293,6 +293,7 @@ function collectFormData() {
         camera_angle: document.getElementById('camera_angle').value,
         time_of_day: document.getElementById('time_of_day').value,
         weather: document.getElementById('weather').value,
+        horizon_line: document.getElementById('horizon_line').value,
         quality_level: document.getElementById('quality_level').value,
         quality_presets: qualityPresets,
         sketch_adherence: parseFloat(document.getElementById('sketch_adherence').value),
@@ -581,14 +582,16 @@ async function handleUpscale() {
     const upscaleButton = document.getElementById('upscaleButton');
     const upscaleSpinner = document.getElementById('upscaleSpinner');
     const upscaleButtonText = document.getElementById('upscaleButtonText');
+    const upscaleScale = document.getElementById('upscaleScale');
+    const scale = parseInt(upscaleScale.value);
 
     try {
         // Disable button and show loading
         upscaleButton.disabled = true;
         upscaleSpinner.classList.remove('hidden');
-        upscaleButtonText.textContent = 'Upscaling...';
+        upscaleButtonText.textContent = `Upscaling ${scale}x...`;
 
-        console.log('🔍 Starting upscale...');
+        console.log(`🔍 Starting upscale ${scale}x...`);
 
         // Call upscale API
         const response = await fetch(`${API_BASE_URL}/upscale`, {
@@ -598,7 +601,7 @@ async function handleUpscale() {
             },
             body: JSON.stringify({
                 image_base64: currentRenderedImage,
-                scale: 2  // 2x upscale
+                scale: scale
             })
         });
 
@@ -625,7 +628,7 @@ async function handleUpscale() {
         // Re-enable button
         upscaleButton.disabled = false;
         upscaleSpinner.classList.add('hidden');
-        upscaleButtonText.textContent = '🔍 Upscale & Download (2x)';
+        upscaleButtonText.textContent = '🔍 Upscale & Download';
     }
 }
 
@@ -647,27 +650,27 @@ function downloadImage(base64Data, filename) {
 }
 
 /**
- * Show upscale button when render is complete
+ * Show upscale controls when render is complete
  * Call this after successful render
  */
 function showUpscaleButton(renderedImageBase64) {
     currentRenderedImage = renderedImageBase64;
 
-    const upscaleButton = document.getElementById('upscaleButton');
-    if (upscaleButton) {
-        upscaleButton.classList.remove('hidden');
+    const upscaleControls = document.getElementById('upscaleControls');
+    if (upscaleControls) {
+        upscaleControls.classList.remove('hidden');
     }
 }
 
 /**
- * Hide upscale button
+ * Hide upscale controls
  * Call this when starting new render
  */
 function hideUpscaleButton() {
     currentRenderedImage = null;
 
-    const upscaleButton = document.getElementById('upscaleButton');
-    if (upscaleButton) {
-        upscaleButton.classList.add('hidden');
+    const upscaleControls = document.getElementById('upscaleControls');
+    if (upscaleControls) {
+        upscaleControls.classList.add('hidden');
     }
 }

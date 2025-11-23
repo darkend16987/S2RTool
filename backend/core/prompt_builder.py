@@ -228,6 +228,10 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
 3. **CAMERA & COMPOSITION**:
    Camera Angle: {camera_angle}
    Aspect Ratio: {aspect_ratio}
+
+   **Horizon Line Control**:
+   {horizon_line}
+
    ✓ Show entire development clearly
    ✓ Maintain specified aerial perspective
    ✓ Clear view of layout relationships
@@ -638,6 +642,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         camera_angle: str = "match_sketch",
         time_of_day: str = "golden_hour",
         weather: str = "clear",
+        horizon_line: str = "ground_only",
         quality_level: str = "high_fidelity",
         quality_presets: dict = None,
         sketch_adherence: float = 0.90,
@@ -651,6 +656,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             camera_angle: Aerial perspective
             time_of_day: Time of day for lighting
             weather: Weather conditions
+            horizon_line: Horizon line control (ground_only/with_horizon)
             quality_level: Quality level preset (standard/high_fidelity/ultra_realism)
             quality_presets: Dict of render quality options (can override quality_level)
             sketch_adherence: How strictly to follow sketch (0.5-1.0)
@@ -686,6 +692,22 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             "foggy": "Foggy/misty (reduced visibility, atmospheric depth, soft diffusion)"
         }
 
+        # Horizon line descriptions
+        horizon_line_descriptions = {
+            "ground_only": """⚠️ AERIAL VIEW - NO HORIZON LINE:
+   - This is an AERIAL/TOP-DOWN view from directly above or high angle
+   - Camera is looking DOWN at the ground
+   - Focus ONLY on ground-level context: buildings, roads, landscape, ground surfaces
+   - DO NOT include visible sky or horizon line in the composition
+   - The frame should be filled with ground elements only
+   - Background should fade to atmospheric haze, NOT sky/horizon""",
+            "with_horizon": """✓ DISTANT VIEW - WITH HORIZON LINE:
+   - This view is from sufficient distance to show horizon
+   - Include visible sky and horizon line
+   - Natural sky-to-ground transition
+   - Both ground context and distant horizon are visible"""
+        }
+
         # Build render effects list based on quality presets
         if quality_presets is None:
             quality_presets = {}
@@ -713,6 +735,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
         camera_desc = camera_angles.get(camera_angle, camera_angles["match_sketch"])
         time_desc = time_descriptions.get(time_of_day, time_descriptions["golden_hour"])
         weather_desc = weather_descriptions.get(weather, weather_descriptions["clear"])
+        horizon_line_desc = horizon_line_descriptions.get(horizon_line, horizon_line_descriptions["ground_only"])
 
         # Quality level adjustments
         quality_notes = {
@@ -757,6 +780,7 @@ You are performing high-fidelity inpainting. Adherence to mask and style is HIGH
             camera_angle=camera_desc,
             time_of_day=time_desc,
             weather=weather_desc,
+            horizon_line=horizon_line_desc,
             quality_note=quality_note,
             interior_lighting=interior_lighting,
             rooftop_details=rooftop_details,
