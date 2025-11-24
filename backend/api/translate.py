@@ -1,14 +1,14 @@
-"""
-from core.logger import logger
-api/translate.py - Translation Endpoint
+"""api/translate.py - Translation Endpoint
 ✅ FIX: Thread-safe instances to prevent race conditions
 """
+
+from core.logger import logger
 
 from flask import Blueprint, request, jsonify
 
 from core.thread_local import get_translator
 
-translate_bp = Bluelogger.info('translate', __name__)
+translate_bp = Blueprint('translate', __name__)
 
 
 @translate_bp.route('/translate-prompt', methods=['POST'])

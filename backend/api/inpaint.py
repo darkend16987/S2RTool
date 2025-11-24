@@ -1,8 +1,8 @@
-"""
-from core.logger import logger
-api/inpaint.py - Inpainting Endpoint
+"""api/inpaint.py - Inpainting Endpoint
 ✅ FIX: Thread-safe instances to prevent race conditions
 """
+
+from core.logger import logger
 
 from flask import Blueprint, request, jsonify
 import numpy as np
@@ -12,7 +12,7 @@ from PIL import Image
 
 from core.thread_local import get_image_processor, get_inpainting_engine
 
-inpaint_bp = Bluelogger.info('inpaint', __name__)
+inpaint_bp = Blueprint('inpaint', __name__)
 
 
 @inpaint_bp.route('/inpaint', methods=['POST'])

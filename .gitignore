@@ -16,3 +16,4 @@ __pycache__/
 # Backup files
 *.backup
 *.py.backup
+*.backup2

@@ -1,9 +1,9 @@
-"""
-from core.logger import logger
-api/render.py - Main Render Endpoint
+"""api/render.py - Main Render Endpoint
 ✅ FIX: Re-translates form_data_vi to include user edits
 ✅ FIX: Thread-safe instances to prevent race conditions
 """
+
+from core.logger import logger
 
 from flask import Blueprint, request, jsonify
 import base64
@@ -16,7 +16,7 @@ from core.thread_local import (
     get_translator
 )
 
-render_bp = Bluelogger.info('render', __name__)
+render_bp = Blueprint('render', __name__)
 
 
 @render_bp.route('/render', methods=['POST'])

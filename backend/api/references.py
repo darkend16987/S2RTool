@@ -1,14 +1,14 @@
+"""api/references.py - Reference Images API
 """
+
 from core.logger import logger
-api/references.py - Reference Images API
-"""
 
 from flask import Blueprint, request, jsonify, send_file
 import io
 
 from references.library import get_library
 
-references_bp = Bluelogger.info('references', __name__)
+references_bp = Blueprint('references', __name__)
 
 
 @references_bp.route('/references/list', methods=['GET'])

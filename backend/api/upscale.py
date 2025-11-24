@@ -1,8 +1,8 @@
-"""
-from core.logger import logger
-api/upscale.py - Image Upscaling Endpoint
+"""api/upscale.py - Image Upscaling Endpoint
 Upscales rendered images using Replicate Real-ESRGAN
 """
+
+from core.logger import logger
 
 import base64
 import io
@@ -11,7 +11,7 @@ from flask import Blueprint, request, jsonify
 from core.thread_local import get_image_processor
 from core.upscale_client import UpscaleClient
 
-upscale_bp = Bluelogger.info('upscale', __name__)
+upscale_bp = Blueprint('upscale', __name__)
 
 
 @upscale_bp.route('/upscale', methods=['POST'])
