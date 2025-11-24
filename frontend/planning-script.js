@@ -26,9 +26,9 @@ async function optimizeImageForUpload(file) {
                 width = Math.round(width * ratio);
                 height = Math.round(height * ratio);
 
-                console.log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
+                log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
             } else {
-                console.log(`📐 Image already optimal: ${width}×${height}`);
+                log(`📐 Image already optimal: ${width}×${height}`);
             }
 
             canvas.width = width;
@@ -87,7 +87,7 @@ async function handleSitePlanUpload(event) {
     if (!file) return;
 
     try {
-        console.log('📤 Processing site plan upload...');
+        log('📤 Processing site plan upload...');
 
         const optimizedBlob = await optimizeImageForUpload(file);
 
@@ -110,12 +110,12 @@ async function handleSitePlanUpload(event) {
             }
 
             updateGenerateButton();
-            console.log('✅ Site plan uploaded');
+            log('✅ Site plan uploaded');
         };
         reader.readAsDataURL(optimizedBlob);
 
     } catch (error) {
-        console.error('❌ Site plan upload failed:', error);
+        logError('❌ Site plan upload failed:', error);
         showError('planningError', 'Lỗi tải site plan. Vui lòng thử lại.');
     }
 }
@@ -125,7 +125,7 @@ async function handleLotMapUpload(event) {
     if (!file) return;
 
     try {
-        console.log('📤 Processing lot map upload...');
+        log('📤 Processing lot map upload...');
 
         const optimizedBlob = await optimizeImageForUpload(file);
 
@@ -153,12 +153,12 @@ async function handleLotMapUpload(event) {
             }
 
             updateGenerateButton();
-            console.log('✅ Lot map uploaded');
+            log('✅ Lot map uploaded');
         };
         reader.readAsDataURL(optimizedBlob);
 
     } catch (error) {
-        console.error('❌ Lot map upload failed:', error);
+        logError('❌ Lot map upload failed:', error);
         showError('planningError', 'Lỗi tải lot map. Vui lòng thử lại.');
     }
 }
@@ -216,7 +216,7 @@ function addLotDescription() {
 
     updateGenerateButton();
 
-    console.log(`✅ Added lot description card #${lotNumber}`);
+    log(`✅ Added lot description card #${lotNumber}`);
 }
 
 function updateLotNumbers() {
@@ -290,7 +290,7 @@ async function generatePlanningRender() {
     }
 
     if (isPlanningRendering) {
-        console.warn('⚠️  Planning render already in progress');
+        logWarn('⚠️  Planning render already in progress');
         return;
     }
 
@@ -298,7 +298,7 @@ async function generatePlanningRender() {
     const generateBtn = document.getElementById('generatePlanningBtn');
 
     try {
-        console.log('🎨 Generating planning render...');
+        log('🎨 Generating planning render...');
 
         generateBtn.disabled = true;
         generateBtn.innerHTML = '<span class="spinner"></span> Đang render...';
@@ -320,7 +320,7 @@ async function generatePlanningRender() {
             style_keywords: styleKeywords
         };
 
-        console.log('📝 Planning request:', {
+        log('📝 Planning request:', {
             lots: lots.length,
             camera_angle: cameraAngle,
             time_of_day: timeOfDay
@@ -342,10 +342,10 @@ async function generatePlanningRender() {
         displayPlanningRender(result.generated_image_base64, result.mime_type);
 
         showSuccess('planningSuccess', '🎉 Planning render hoàn tất!');
-        console.log('✅ Planning render complete');
+        log('✅ Planning render complete');
 
     } catch (error) {
-        console.error('❌ Planning render failed:', error);
+        logError('❌ Planning render failed:', error);
         showError('planningError', `Lỗi render: ${error.message}`);
     } finally {
         generateBtn.disabled = false;
@@ -383,7 +383,7 @@ function displayPlanningRender(base64Data, mimeType) {
         controls.classList.remove('hidden');
     }
 
-    console.log('✅ Planning render displayed');
+    log('✅ Planning render displayed');
 }
 
 function downloadPlanningImage(base64Data) {
@@ -409,17 +409,17 @@ function downloadPlanningImage(base64Data) {
         URL.revokeObjectURL(url);
 
         showSuccess('planningSuccess', '✅ Ảnh đã được tải xuống!');
-        console.log('✅ Planning image downloaded');
+        log('✅ Planning image downloaded');
 
     } catch (error) {
-        console.error('❌ Download failed:', error);
+        logError('❌ Download failed:', error);
         showError('planningError', 'Lỗi khi tải ảnh. Vui lòng thử lại.');
     }
 }
 
 // ============== INIT ==============
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Planning Mode initialized');
+    log('🚀 Planning Mode initialized');
 
     const sitePlanInput = document.getElementById('uploadSitePlan');
     const lotMapInput = document.getElementById('uploadLotMap');
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         regenerateBtn.addEventListener('click', generatePlanningRender);
     }
 
-    console.log('✅ Planning Mode setup complete');
+    log('✅ Planning Mode setup complete');
 });
 
-console.log('📦 Planning script v3.2 loaded successfully! 🎉');
+log('📦 Planning script v3.2 loaded successfully! 🎉');
