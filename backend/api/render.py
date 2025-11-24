@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 api/render.py - Main Render Endpoint
 ✅ FIX: Re-translates form_data_vi to include user edits
 ✅ FIX: Thread-safe instances to prevent race conditions
@@ -15,7 +16,7 @@ from core.thread_local import (
     get_translator
 )
 
-render_bp = Blueprint('render', __name__)
+render_bp = Bluelogger.info('render', __name__)
 
 
 @render_bp.route('/render', methods=['POST'])
@@ -75,16 +76,16 @@ def render_image():
             reference_pil, _ = processor.process_base64_image(data['reference_image_base64'])
         
         # ✅ FIX: RE-TRANSLATE form_data_vi to include user edits!
-        print("🔄 Re-translating form_data_vi with user edits...")
+        logger.info("🔄 Re-translating form_data_vi with user edits...")
         form_data_vi = data['form_data_vi']
         
         try:
             translated_data_en = translator.translate_vi_to_en(form_data_vi)
-            print(f"✅ Translation successful!")
-            print(f"   Lighting: {translated_data_en.get('technical_specs', {}).get('lighting', 'N/A')}")
-            print(f"   Environment items: {len(translated_data_en.get('environment', []))}")
+            logger.info(f"✅ Translation successful!")
+            logger.info(f"   Lighting: {translated_data_en.get('technical_specs', {}).get('lighting', 'N/A')}")
+            logger.info(f"   Environment items: {len(translated_data_en.get('environment', []))}")
         except Exception as e:
-            print(f"❌ Translation failed: {e}")
+            logger.error(f"❌ Translation failed: {e}")
             return jsonify({"error": f"Translation failed: {str(e)}"}), 500
         
         # Build prompt from FRESH translation (with user edits!)
@@ -94,7 +95,7 @@ def render_image():
         # ✅ FIX: Extract sketch_adherence from form_data_vi (user-controlled!)
         sketch_adherence = form_data_vi.get('sketch_adherence', 0.95)
 
-        print(f"🎯 Geometry control: sketch_adherence={sketch_adherence}, aspect_ratio={aspect_ratio}")
+        logger.info(f"🎯 Geometry control: sketch_adherence={sketch_adherence}, aspect_ratio={aspect_ratio}")
 
         prompt, negative_prompt = prompt_builder.build_render_prompt(
             translated_data_en=translated_data_en,
@@ -104,8 +105,8 @@ def render_image():
             aspect_ratio=aspect_ratio
         )
         
-        print(f"📝 Prompt preview (first 200 chars):")
-        print(f"   {prompt[:200]}...")
+        logger.info(f"📝 Prompt preview (first 200 chars):")
+        logger.info(f"   {prompt[:200]}...")
         
         # Generate image
         generated_pil = gemini.generate_image(
@@ -131,7 +132,7 @@ def render_image():
         })
         
     except Exception as e:
-        print(f"Render error: {e}")
+        logger.error(f"Render error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

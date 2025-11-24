@@ -33,7 +33,7 @@ let viewpointSelect;
 
 // ============== INIT ==============
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 S2R Tool v3.1 initialized');
+    log('🚀 S2R Tool v3.1 initialized');
 
     // Initialize DOM elements after DOM is ready
     uploadSketch = document.getElementById('uploadSketch');
@@ -191,9 +191,9 @@ async function optimizeImageForUpload(file) {
                 width = Math.round(width * ratio);
                 height = Math.round(height * ratio);
 
-                console.log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
+                log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
             } else {
-                console.log(`📐 Image already optimal: ${width}×${height}`);
+                log(`📐 Image already optimal: ${width}×${height}`);
             }
 
             canvas.width = width;
@@ -221,7 +221,7 @@ async function handleImageUpload(event) {
     if (!file) return;
 
     try {
-        console.log(`📤 Processing upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+        log(`📤 Processing upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
         // ✅ FIX: Optimize image before upload
         const optimizedBlob = await optimizeImageForUpload(file);
@@ -229,7 +229,7 @@ async function handleImageUpload(event) {
         const originalSize = (file.size / 1024 / 1024).toFixed(2);
         const savings = ((1 - optimizedBlob.size / file.size) * 100).toFixed(0);
 
-        console.log(`✅ Optimized: ${originalSize}MB → ${optimizedSize}MB (saved ${savings}%)`);
+        log(`✅ Optimized: ${originalSize}MB → ${optimizedSize}MB (saved ${savings}%)`);
 
         // Convert to base64
         const reader = new FileReader();
@@ -240,12 +240,12 @@ async function handleImageUpload(event) {
             uploadLabel.classList.add('hidden');
             analyzeButton.disabled = false;
 
-            console.log('✅ Image ready for analysis');
+            log('✅ Image ready for analysis');
         };
         reader.readAsDataURL(optimizedBlob);
 
     } catch (error) {
-        console.error('❌ Image optimization failed:', error);
+        logError('❌ Image optimization failed:', error);
         showError('analyzeError', 'Lỗi xử lý ảnh. Vui lòng thử lại.');
     }
 }
@@ -259,7 +259,7 @@ async function analyzeSketch() {
 
     // ✅ FIX: Prevent double-click
     if (isAnalyzing) {
-        console.warn('⚠️  Analysis already in progress, ignoring duplicate request');
+        logWarn('⚠️  Analysis already in progress, ignoring duplicate request');
         return;
     }
 
@@ -270,7 +270,7 @@ async function analyzeSketch() {
     hideSuccess('analyzeSuccess');
 
     try {
-        console.log('📊 Analyzing sketch...');
+        log('📊 Analyzing sketch...');
 
         const response = await fetch(`${API_BASE_URL}/analyze-sketch`, {
             method: 'POST',
@@ -289,13 +289,13 @@ async function analyzeSketch() {
                     errorMsg = errorData.error;
                 }
             } catch (jsonError) {
-                console.warn("Could not parse error JSON from backend", jsonError);
+                logWarn("Could not parse error JSON from backend", jsonError);
             }
             throw new Error(errorMsg);
         }
         
         currentAnalysisData = await response.json();
-        console.log('✅ Analysis complete:', currentAnalysisData);
+        log('✅ Analysis complete:', currentAnalysisData);
         
         // Auto-fill form với dữ liệu phân tích
         fillFormFromAnalysis(currentAnalysisData);
@@ -306,7 +306,7 @@ async function analyzeSketch() {
         showSuccess('analyzeSuccess', '✨ Phân tích thành công! Vui lòng kiểm tra và chỉnh sửa thông số.'); // ⭐ FIXED: No more alert()
         
     } catch (error) {
-        console.error('❌ Analysis failed:', error);
+        logError('❌ Analysis failed:', error);
         showError('analyzeError', `Lỗi phân tích: ${error.message}`);
     } finally {
         showSpinner('analyzeSpinner', false);
@@ -347,29 +347,35 @@ function fillFormFromAnalysis(data) {
 
     // Critical elements
     const criticalContainer = document.getElementById('criticalElementsContainer');
-    criticalContainer.innerHTML = '';
-    if (data.critical_elements) {
-        data.critical_elements.forEach(elem => {
-            addDynamicItem(criticalContainer, 'element', elem.type, elem.description);
-        });
+    if (criticalContainer) {
+        criticalContainer.innerHTML = '';
+        if (data.critical_elements) {
+            data.critical_elements.forEach(elem => {
+                addDynamicItem(criticalContainer, 'element', elem.type, elem.description);
+            });
+        }
     }
-    
+
     // Materials
     const materialsContainer = document.getElementById('materialsPreciseContainer');
-    materialsContainer.innerHTML = '';
-    if (data.materials_precise) {
-        data.materials_precise.forEach(mat => {
-            addDynamicItem(materialsContainer, 'material', mat.type, mat.description);
-        });
+    if (materialsContainer) {
+        materialsContainer.innerHTML = '';
+        if (data.materials_precise) {
+            data.materials_precise.forEach(mat => {
+                addDynamicItem(materialsContainer, 'material', mat.type, mat.description);
+            });
+        }
     }
-    
+
     // Environment
     const envContainer = document.getElementById('environmentContainer');
-    envContainer.innerHTML = '';
-    if (data.environment) {
-        data.environment.forEach(env => {
-            addDynamicItem(envContainer, 'setting', env.type, env.description);
-        });
+    if (envContainer) {
+        envContainer.innerHTML = '';
+        if (data.environment) {
+            data.environment.forEach(env => {
+                addDynamicItem(envContainer, 'setting', env.type, env.description);
+            });
+        }
     }
     
     // Technical specs
@@ -385,7 +391,7 @@ function fillFormFromAnalysis(data) {
 async function translatePrompt() {
     // ✅ FIX: Prevent double-click
     if (isTranslating) {
-        console.warn('⚠️  Translation already in progress, ignoring duplicate request');
+        logWarn('⚠️  Translation already in progress, ignoring duplicate request');
         return;
     }
 
@@ -393,7 +399,7 @@ async function translatePrompt() {
     const formData = collectFormData();
 
     try {
-        console.log('🌐 Translating to English...');
+        log('🌐 Translating to English...');
 
         const response = await fetch(`${API_BASE_URL}/translate-prompt`, {
             method: 'POST',
@@ -409,13 +415,13 @@ async function translatePrompt() {
 
         const result = await response.json();
         currentTranslatedData = result.translated_data_en;
-        console.log('✅ Translation complete');
+        log('✅ Translation complete');
 
         // Enable generate button
         generateButton.disabled = false;
 
     } catch (error) {
-        console.error('❌ Translation failed:', error);
+        logError('❌ Translation failed:', error);
         throw error;
     } finally {
         isTranslating = false;  // ✅ FIX: Reset flag
@@ -548,7 +554,7 @@ async function generateRender() {
 
     // ✅ FIX: Prevent double-click
     if (isRendering) {
-        console.warn('⚠️  Rendering already in progress, ignoring duplicate request');
+        logWarn('⚠️  Rendering already in progress, ignoring duplicate request');
         return;
     }
 
@@ -560,16 +566,16 @@ async function generateRender() {
     hideUpscaleButton(); // Hide upscale button when starting new render
 
     try {
-        console.log('🎨 Generating render...');
+        log('🎨 Generating render...');
 
         // ✅ FIX: Collect FRESH form_data_vi with user edits
         const form_data_vi = collectFormData();
 
-        console.log('📝 Sending form_data_vi with user edits:');
-        console.log('   - Building type:', form_data_vi.building_type);
-        console.log('   - Facade style:', form_data_vi.facade_style);
-        console.log('   - Environment items:', form_data_vi.environment.length);
-        console.log('   - Lighting:', form_data_vi.technical_specs.lighting);
+        log('📝 Sending form_data_vi with user edits:');
+        log('   - Building type:', form_data_vi.building_type);
+        log('   - Facade style:', form_data_vi.facade_style);
+        log('   - Environment items:', form_data_vi.environment.length);
+        log('   - Lighting:', form_data_vi.technical_specs.lighting);
 
         // ✅ FIX: Correct field names matching backend expectations
         const requestData = {
@@ -582,7 +588,7 @@ async function generateRender() {
         // Include reference image if available
         if (currentReferenceImage) {
             requestData.reference_image_base64 = currentReferenceImage;  // ✅ FIXED: Was "reference_image"
-            console.log('📎 Using reference image for style consistency');
+            log('📎 Using reference image for style consistency');
         }
 
         const response = await fetch(`${API_BASE_URL}/render`, {
@@ -608,10 +614,10 @@ async function generateRender() {
         showUpscaleButton(result.generated_image_base64);
 
         showSuccess('renderSuccess', '🎉 Render hoàn tất! Bạn có thể tải ảnh xuống bên dưới.');
-        console.log('✅ Render complete');
+        log('✅ Render complete');
 
     } catch (error) {
-        console.error('❌ Render failed:', error);
+        logError('❌ Render failed:', error);
         showError('renderError', `Lỗi render: ${error.message}`);
     } finally {
         showSpinner('renderSpinner', false);
@@ -671,10 +677,10 @@ function handleDownloadImage() {
         URL.revokeObjectURL(url);
         
         showSuccess('renderSuccess', '✅ Ảnh đã được tải xuống!');
-        console.log('✅ Image downloaded');
+        log('✅ Image downloaded');
         
     } catch (error) {
-        console.error('❌ Download failed:', error);
+        logError('❌ Download failed:', error);
         showError('renderError', 'Lỗi khi tải ảnh. Vui lòng thử lại.');
     }
 }
@@ -682,7 +688,7 @@ function handleDownloadImage() {
 // ============== DYNAMIC ITEMS (FORM) ==============
 function setupDynamicContainers() {
     // Initialize empty containers
-    console.log('🔧 Dynamic containers ready');
+    log('🔧 Dynamic containers ready');
 }
 
 function addDynamicItem(container, type, typeValue = '', descriptionValue = '') {
@@ -707,11 +713,11 @@ function addDynamicItem(container, type, typeValue = '', descriptionValue = '') 
 
 // ============== REFERENCE IMAGE FEATURE ==============
 function setupReferenceImageUI() {
-    console.log('🔧 Setting up Reference Image UI...');
+    log('🔧 Setting up Reference Image UI...');
 
     const formElement = document.getElementById('renderPromptForm');
     if (!formElement) {
-        console.error('❌ Form element not found!');
+        logError('❌ Form element not found!');
         return;
     }
 
@@ -768,14 +774,14 @@ function setupReferenceImageUI() {
     );
 
     if (styleSection) {
-        console.log('✅ Found style section, inserting reference section before it');
+        log('✅ Found style section, inserting reference section before it');
         formElement.insertBefore(referenceSection, styleSection);
     } else {
-        console.log('⚠️  Style section not found, appending to end of form');
+        log('⚠️  Style section not found, appending to end of form');
         formElement.appendChild(referenceSection);
     }
 
-    console.log('✅ Reference section inserted into DOM');
+    log('✅ Reference section inserted into DOM');
 
     // Event listeners
     document.getElementById('chooseFromLibraryBtn').addEventListener('click', openReferenceLibrary);
@@ -786,11 +792,11 @@ function setupReferenceImageUI() {
         clearBtn.addEventListener('click', () => {
             currentReferenceImage = null;
             document.getElementById('referencePreview').classList.add('hidden');
-            console.log('🗑️ Reference cleared');
+            log('🗑️ Reference cleared');
         });
     }
 
-    console.log('✅ Reference Image UI setup complete!');
+    log('✅ Reference Image UI setup complete!');
 }
 
 function handleReferenceUpload(event) {
@@ -802,7 +808,7 @@ function handleReferenceUpload(event) {
         currentReferenceImage = e.target.result;
         showReferencePreview(e.target.result);
         
-        console.log('✅ Reference uploaded');
+        log('✅ Reference uploaded');
         showSuccess('renderSuccess', '✅ Đã tải ảnh reference! Render tiếp sẽ giữ style từ ảnh này.'); // ⭐ FIXED: No more alert()
     };
     reader.readAsDataURL(file);
@@ -829,7 +835,7 @@ async function openReferenceLibrary() {
         
         showCategoryPicker(data.categories);
     } catch (error) {
-        console.error('❌ Failed to load reference library:', error);
+        logError('❌ Failed to load reference library:', error);
         showError('renderError', 'Không thể tải thư viện reference. Vui lòng kiểm tra backend.'); // ⭐ FIXED: No more alert()
     }
 }
@@ -936,11 +942,11 @@ async function selectReferenceFromLibrary(imageId) {
         currentReferenceImage = `data:${data.mime_type};base64,${data.base64}`;
         showReferencePreview(currentReferenceImage);
         
-        console.log('✅ Reference selected from library:', imageId);
+        log('✅ Reference selected from library:', imageId);
         showSuccess('renderSuccess', '✅ Đã chọn reference từ thư viện!'); // ⭐ FIXED: No more alert()
         
     } catch (error) {
-        console.error('❌ Reference download failed:', error);
+        logError('❌ Reference download failed:', error);
         showError('renderError', 'Không thể tải ảnh reference. Vui lòng thử lại.');
     }
 }
@@ -979,7 +985,7 @@ function addUseAsReferenceButton() {
         }
         
         showSuccess('renderSuccess', '✅ Đã lưu ảnh này làm reference! Render tiếp sẽ giữ style từ ảnh này.');
-        console.log('📎 Current render saved as reference');
+        log('📎 Current render saved as reference');
     });
     
     controls.appendChild(btn);
@@ -1019,7 +1025,7 @@ function handleMaskUpload(event) {
             applyBtn.disabled = false;
         }
         
-        console.log('✅ Mask image uploaded');
+        log('✅ Mask image uploaded');
     };
     reader.readAsDataURL(file);
 }
@@ -1043,14 +1049,14 @@ async function applyInpainting() {
 
     // ✅ FIX: Prevent double-click
     if (isInpainting) {
-        console.warn('⚠️  Inpainting already in progress, ignoring duplicate request');
+        logWarn('⚠️  Inpainting already in progress, ignoring duplicate request');
         return;
     }
 
     isInpainting = true;
 
     try {
-        console.log('🎨 Starting inpainting...');
+        log('🎨 Starting inpainting...');
 
         // Show loading
         const applyBtn = document.getElementById('applyInpaintBtn');
@@ -1083,13 +1089,13 @@ async function applyInpainting() {
         displayRenderedImage(data.edited_image, data.mime_type);
         
         showSuccess('renderSuccess', '✨ Inpainting hoàn tất! Ảnh đã được chỉnh sửa.');
-        console.log('✅ Inpainting complete');
+        log('✅ Inpainting complete');
         
         // Reset inpaint form
         document.getElementById('inpaintInstruction').value = '';
         
     } catch (error) {
-        console.error('❌ Inpainting failed:', error);
+        logError('❌ Inpainting failed:', error);
         showError('renderError', `Lỗi inpainting: ${error.message}`);
     } finally {
         // Restore button
@@ -1153,7 +1159,7 @@ function exportToJSON() {
     a.click();
     URL.revokeObjectURL(url);
     
-    console.log('✅ JSON exported');
+    log('✅ JSON exported');
 }
 
 // ============== HELPER FUNCTIONS ==============
@@ -1236,7 +1242,7 @@ async function handleUpscale() {
         upscaleSpinner.classList.remove('hidden');
         upscaleButtonText.textContent = `Upscaling ${scale}x...`;
 
-        console.log(`🔍 Starting upscale ${scale}x...`);
+        log(`🔍 Starting upscale ${scale}x...`);
 
         // Call upscale API
         const response = await fetch(`${API_BASE_URL}/upscale`, {
@@ -1256,10 +1262,10 @@ async function handleUpscale() {
             throw new Error(data.error || 'Upscale failed');
         }
 
-        console.log('✅ Upscale complete!');
-        console.log(`   Original: ${data.original_resolution}`);
-        console.log(`   Upscaled: ${data.upscaled_resolution}`);
-        console.log(`   Cost: $${data.cost_estimate.toFixed(3)}`);
+        log('✅ Upscale complete!');
+        log(`   Original: ${data.original_resolution}`);
+        log(`   Upscaled: ${data.upscaled_resolution}`);
+        log(`   Cost: $${data.cost_estimate.toFixed(3)}`);
 
         // Auto download upscaled image
         downloadImage(data.upscaled_image_base64, 'upscaled-render.png');
@@ -1267,7 +1273,7 @@ async function handleUpscale() {
         showSuccess('renderSuccess', `✓ Upscaled to ${data.upscaled_resolution} and downloaded!`);
 
     } catch (error) {
-        console.error('❌ Upscale error:', error);
+        logError('❌ Upscale error:', error);
         showError('renderError', `Upscale error: ${error.message}`);
     } finally {
         // Re-enable button
@@ -1291,7 +1297,7 @@ function downloadImage(base64Data, filename) {
     link.click();
     document.body.removeChild(link);
 
-    console.log(`📥 Downloaded: ${filename}`);
+    log(`📥 Downloaded: ${filename}`);
 }
 
 /**

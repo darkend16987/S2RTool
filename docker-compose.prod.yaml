@@ -1,0 +1,81 @@
+# Production Docker Compose Configuration
+# Usage: docker-compose -f docker-compose.prod.yaml up -d
+
+services:
+  # Backend service (Flask API)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: s2rtool-backend-prod
+    ports:
+      - "5001:5001"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - PORT=5001
+      - HOST=0.0.0.0
+      - DEBUG=False
+      - LOG_LEVEL=WARNING
+    env_file:
+      - .env
+    volumes:
+      # Only persist reference images and logs in production
+      - backend-references:/app/references
+      - backend-logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - s2rtool-network
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Frontend service (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: s2rtool-frontend-prod
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - s2rtool-network
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  s2rtool-network:
+    driver: bridge
+
+volumes:
+  backend-references:
+    driver: local
+  backend-logs:
+    driver: local

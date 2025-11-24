@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 core/thread_local.py - Thread-Local Instance Management
 
 Provides thread-safe singleton instances for Flask workers
@@ -30,7 +31,7 @@ def get_analysis_cache():
     if _global_analysis_cache is None:
         from core.analysis_cache import AnalysisCache
         _global_analysis_cache = AnalysisCache(maxsize=100, ttl_hours=24)
-        print("✅ Analysis cache initialized (maxsize=100, TTL=24h)")
+        logger.info("✅ Analysis cache initialized (maxsize=100, TTL=24h)")
     return _global_analysis_cache
 
 

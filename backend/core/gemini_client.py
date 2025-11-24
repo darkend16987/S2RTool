@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 core/gemini_client.py - Gemini API Client Wrapper
 Uses BOTH old (generativeai) and new (genai) APIs
 ✅ FIX: Added retry logic with exponential backoff
@@ -23,8 +24,8 @@ try:
     HAS_NEW_API = True
 except ImportError:
     HAS_NEW_API = False
-    print("⚠️  google-genai not installed. Image generation will not work.")
-    print("   Install: pip install google-genai")
+    logger.error("⚠️  google-genai not installed. Image generation will not work.")
+    logger.info("   Install: pip install google-genai")
 
 from config import GEMINI_API_KEY, Models, Defaults
 
@@ -93,8 +94,8 @@ class GeminiClient:
 
                 # Calculate backoff time: 2^attempt seconds (2s, 4s, 8s)
                 backoff_time = 2 ** attempt
-                print(f"⚠️  Gemini API error (attempt {attempt + 1}/{self.max_retries}): {e}")
-                print(f"   Retrying in {backoff_time} seconds...")
+                logger.error(f"⚠️  Gemini API error (attempt {attempt + 1}/{self.max_retries}): {e}")
+                logger.info(f"   Retrying in {backoff_time} seconds...")
                 time.sleep(backoff_time)
 
         # This shouldn't be reached, but just in case
@@ -177,12 +178,12 @@ class GeminiClient:
             Generated PIL Image or None
         """
         if not HAS_NEW_API or not self.client_new:
-            print("❌ google-genai not installed!")
-            print("   Install: pip install google-genai")
+            logger.error("❌ google-genai not installed!")
+            logger.info("   Install: pip install google-genai")
             return None
 
         def _generate_img():
-            print(f"🎨 Generating image with {model_name}...")
+            logger.info(f"🎨 Generating image with {model_name}...")
             
             # Build content parts
             parts = []
@@ -231,7 +232,7 @@ class GeminiClient:
                 temperature=temperature
             )
             
-            print(f"   Sending request to Gemini...")
+            logger.info(f"   Sending request to Gemini...")
             
             # Generate with streaming
             generated_image = None
@@ -252,7 +253,7 @@ class GeminiClient:
                 # Check for image data
                 for part in chunk.candidates[0].content.parts:
                     if part.inline_data and part.inline_data.data:
-                        print(f"   ✅ Received image data (chunk {file_index})")
+                        logger.info(f"   ✅ Received image data (chunk {file_index})")
                         
                         # Get image bytes
                         image_bytes = part.inline_data.data
@@ -260,29 +261,29 @@ class GeminiClient:
                         # Convert to PIL Image
                         try:
                             generated_image = Image.open(io.BytesIO(image_bytes))
-                            print(f"   ✅ Image decoded successfully!")
-                            print(f"   Size: {generated_image.size}")
-                            print(f"   Mode: {generated_image.mode}")
+                            logger.info(f"   ✅ Image decoded successfully!")
+                            logger.info(f"   Size: {generated_image.size}")
+                            logger.info(f"   Mode: {generated_image.mode}")
                             file_index += 1
                         except Exception as e:
-                            print(f"   ⚠️  Failed to decode image: {e}")
+                            logger.error(f"   ⚠️  Failed to decode image: {e}")
                     
                     # Also check for text response
                     if hasattr(chunk, 'text') and chunk.text:
-                        print(f"   Text response: {chunk.text[:100]}")
+                        logger.info(f"   Text response: {chunk.text[:100]}")
             
             if generated_image:
-                print(f"✅ Image generation successful!")
+                logger.info(f"✅ Image generation successful!")
                 return generated_image
             else:
-                print(f"⚠️  No image generated")
+                logger.error(f"⚠️  No image generated")
                 return None
 
         # ✅ FIX: Retry with exponential backoff
         try:
             return self._retry_with_backoff(_generate_img)
         except Exception as e:
-            print(f"❌ Image generation failed after retries: {e}")
+            logger.error(f"❌ Image generation failed after retries: {e}")
             import traceback
             traceback.print_exc()
             return None

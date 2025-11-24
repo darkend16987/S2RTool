@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 api/planning.py - Planning Mode Render Endpoint
 Urban planning visualization with multiple lots
 """
@@ -14,7 +15,7 @@ from core.thread_local import (
 )
 from config import Models
 
-planning_bp = Blueprint('planning', __name__)
+planning_bp = Bluelogger.info('planning', __name__)
 
 
 @planning_bp.route('/planning/render', methods=['POST'])
@@ -93,11 +94,11 @@ def planning_render():
             style_keywords=style_keywords
         )
 
-        print(f"🏙️  Generating planning render...")
-        print(f"   Lots: {len(lot_descriptions)}")
-        print(f"   Camera: {camera_angle}")
-        print(f"   Time: {time_of_day}")
-        print(f"   Aspect ratio: {aspect_ratio}")
+        logger.info(f"🏙️  Generating planning render...")
+        logger.info(f"   Lots: {len(lot_descriptions)}")
+        logger.info(f"   Camera: {camera_angle}")
+        logger.info(f"   Time: {time_of_day}")
+        logger.info(f"   Aspect ratio: {aspect_ratio}")
 
         # Generate with Gemini
         # Send: 1) Site Plan as source, 2) Lot Map as reference
@@ -117,7 +118,7 @@ def planning_render():
         generated_pil.save(output_buffer, format='PNG', quality=95)
         output_base64 = base64.b64encode(output_buffer.getvalue()).decode('utf-8')
 
-        print("✅ Planning render complete")
+        logger.info("✅ Planning render complete")
 
         return jsonify({
             "generated_image_base64": output_base64,
@@ -125,7 +126,7 @@ def planning_render():
         })
 
     except Exception as e:
-        print(f"❌ [PLANNING_RENDER_ERROR] {str(e)}")
+        logger.error(f"❌ [PLANNING_RENDER_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
 
@@ -177,7 +178,7 @@ def analyze_sketch():
         # Build analyze prompt
         analyze_prompt = prompt_builder.build_planning_analyze_prompt()
 
-        print(f"🔍 Analyzing planning sketch...")
+        logger.debug(f"🔍 Analyzing planning sketch...")
 
         # Call Gemini with text generation (JSON response)
         analysis = gemini.generate_content_json(
@@ -186,14 +187,14 @@ def analyze_sketch():
             temperature=0.2  # Low temperature for structured output
         )
 
-        print(f"✅ Planning sketch analyzed successfully")
+        logger.info(f"✅ Planning sketch analyzed successfully")
 
         return jsonify({
             "analysis": analysis
         })
 
     except Exception as e:
-        print(f"❌ [PLANNING_ANALYZE_ERROR] {str(e)}")
+        logger.error(f"❌ [PLANNING_ANALYZE_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
 
@@ -278,26 +279,26 @@ def planning_detail_render():
             aspect_ratio=aspect_ratio
         )
 
-        print(f"🌆 Generating planning detail render...")
-        print(f"   Description: {planning_description[:80]}...")
-        print(f"   Camera: {camera_angle}")
-        print(f"   Time: {time_of_day}, Weather: {weather}")
-        print(f"   Quality Level: {quality_level}")
-        print(f"   Adherence: {sketch_adherence}")
-        print(f"   Aspect ratio: {aspect_ratio}")
+        logger.info(f"🌆 Generating planning detail render...")
+        logger.info(f"   Description: {planning_description[:80]}...")
+        logger.info(f"   Camera: {camera_angle}")
+        logger.info(f"   Time: {time_of_day}, Weather: {weather}")
+        logger.info(f"   Quality Level: {quality_level}")
+        logger.info(f"   Adherence: {sketch_adherence}")
+        logger.info(f"   Aspect ratio: {aspect_ratio}")
 
         # Log structured data if provided (for debugging/monitoring)
         structured_data = planning_data.get('structured_data')
         if structured_data:
-            print(f"   📊 Structured Data:")
-            print(f"      Scale: {structured_data.get('scale', 'N/A')}")
-            print(f"      Project Type: {structured_data.get('project_type', 'N/A')}")
+            logger.info(f"   📊 Structured Data:")
+            logger.info(f"      Scale: {structured_data.get('scale', 'N/A')}")
+            logger.info(f"      Project Type: {structured_data.get('project_type', 'N/A')}")
             hr = structured_data.get('highrise_zone', {})
             if hr.get('count'):
-                print(f"      High-rise: {hr.get('count')} tòa, {hr.get('floors')} tầng")
+                logger.info(f"      High-rise: {hr.get('count')} tòa, {hr.get('floors')} tầng")
             lr = structured_data.get('lowrise_zone', {})
             if lr.get('exists'):
-                print(f"      Low-rise: {lr.get('floors')} tầng")
+                logger.info(f"      Low-rise: {lr.get('floors')} tầng")
 
         # Generate with Gemini
         generated_pil = gemini.generate_image(
@@ -317,7 +318,7 @@ def planning_detail_render():
         # Add data:image/png;base64, prefix
         output_base64_full = f"data:image/png;base64,{output_base64}"
 
-        print("✅ Planning detail render complete")
+        logger.info("✅ Planning detail render complete")
 
         return jsonify({
             "generated_image_base64": output_base64_full,
@@ -326,7 +327,7 @@ def planning_detail_render():
         })
 
     except Exception as e:
-        print(f"❌ [PLANNING_DETAIL_RENDER_ERROR] {str(e)}")
+        logger.error(f"❌ [PLANNING_DETAIL_RENDER_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
 

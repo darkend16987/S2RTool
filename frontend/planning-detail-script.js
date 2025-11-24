@@ -21,7 +21,7 @@ let aspectRatioSelect;
 
 // ============== INIT ==============
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Planning Detail Render v1.0 initialized');
+    log('🚀 Planning Detail Render v1.0 initialized');
 
     // Initialize DOM elements after DOM is ready
     uploadSketch = document.getElementById('uploadSketch');
@@ -37,10 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============== EVENT LISTENERS ==============
 function setupEventListeners() {
     // File upload
-    uploadSketch.addEventListener('change', handleImageUpload);
+    if (uploadSketch) {
+        uploadSketch.addEventListener('change', handleImageUpload);
+    } else {
+        logError('❌ uploadSketch element not found');
+    }
 
     // Click preview to re-upload
-    previewImage.addEventListener('click', () => uploadSketch.click());
+    if (previewImage && uploadSketch) {
+        previewImage.addEventListener('click', () => uploadSketch.click());
+    }
 
     // Analyze button
     const analyzeButton = document.getElementById('analyzeSketchButton');
@@ -49,7 +55,11 @@ function setupEventListeners() {
     }
 
     // Generate button
-    generateButton.addEventListener('click', generateRender);
+    if (generateButton) {
+        generateButton.addEventListener('click', generateRender);
+    } else {
+        logError('❌ generateButton element not found');
+    }
 
     // Download button
     document.addEventListener('click', (e) => {
@@ -142,7 +152,7 @@ function applyQualityPreset(level) {
     document.getElementById('quality_color_correction').checked = preset.color_correction;
     document.getElementById('quality_desaturate').checked = preset.desaturate;
 
-    console.log(`✅ Applied ${level} quality preset`);
+    log(`✅ Applied ${level} quality preset`);
 }
 
 // ============== IMAGE UPLOAD ==============
@@ -150,7 +160,7 @@ async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    console.log(`📁 Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    log(`📁 Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
     try {
         // Read file as base64
@@ -167,11 +177,11 @@ async function handleImageUpload(event) {
             // Enable generate button
             generateButton.disabled = false;
 
-            console.log('✅ Image uploaded successfully');
+            log('✅ Image uploaded successfully');
         };
         reader.readAsDataURL(file);
     } catch (error) {
-        console.error('❌ Image upload failed:', error);
+        logError('❌ Image upload failed:', error);
         showError('renderError', 'Lỗi khi tải ảnh: ' + error.message);
     }
 }
@@ -192,7 +202,7 @@ async function analyzeSketch() {
     showSpinner('analyzeSpinner', true);
     hideError('renderError');
 
-    console.log('🔍 Analyzing sketch...');
+    log('🔍 Analyzing sketch...');
 
     try {
         const response = await fetch(`${API_BASE_URL}/planning/analyze-sketch`, {
@@ -209,7 +219,7 @@ async function analyzeSketch() {
         }
 
         const data = await response.json();
-        console.log('✅ Analysis complete:', data);
+        log('✅ Analysis complete:', data);
 
         // Fill form with analyzed data
         fillFormFromAnalysis(data.analysis);
@@ -218,7 +228,7 @@ async function analyzeSketch() {
         setTimeout(() => hideSuccess('renderSuccess'), 5000);
 
     } catch (error) {
-        console.error('❌ Analyze failed:', error);
+        logError('❌ Analyze failed:', error);
         showError('renderError', `Lỗi phân tích: ${error.message}`);
     } finally {
         analyzeButton.disabled = false;
@@ -269,7 +279,7 @@ function fillFormFromAnalysis(analysis) {
         if (land.road_pattern) document.getElementById('road_pattern').value = land.road_pattern;
     }
 
-    console.log('✅ Form filled from analysis');
+    log('✅ Form filled from analysis');
 }
 
 // ============== COLLECT FORM DATA ==============
@@ -417,7 +427,7 @@ async function generateRender() {
     }
 
     if (isRendering) {
-        console.warn('⚠️  Rendering already in progress');
+        logWarn('⚠️  Rendering already in progress');
         return;
     }
 
@@ -439,10 +449,10 @@ async function generateRender() {
     hideUpscaleButton(); // Hide upscale button when starting new render
 
     try {
-        console.log('🎨 Generating planning detail render...');
+        log('🎨 Generating planning detail render...');
 
         const formData = collectFormData();
-        console.log('📝 Form data:', formData);
+        log('📝 Form data:', formData);
 
         const requestData = {
             image_base64: currentSketchImage,
@@ -465,7 +475,7 @@ async function generateRender() {
         const data = await response.json();
         const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
-        console.log(`✅ Render generated in ${elapsedTime}s`);
+        log(`✅ Render generated in ${elapsedTime}s`);
 
         // Display result
         currentRenderedImage = data.generated_image_base64;
@@ -481,7 +491,7 @@ async function generateRender() {
         document.getElementById('statsBox').classList.remove('hidden');
 
     } catch (error) {
-        console.error('❌ Render failed:', error);
+        logError('❌ Render failed:', error);
         showError('renderError', 'Lỗi khi render: ' + error.message);
     } finally {
         isRendering = false;
@@ -519,7 +529,7 @@ function handleDownloadImage() {
     link.download = `planning-detail-render-${Date.now()}.png`;
     link.click();
 
-    console.log('📥 Image downloaded');
+    log('📥 Image downloaded');
     showSuccess('renderSuccess', '✅ Đã tải ảnh về!');
 }
 
@@ -600,7 +610,7 @@ async function handleUpscale() {
         upscaleSpinner.classList.remove('hidden');
         upscaleButtonText.textContent = `Upscaling ${scale}x...`;
 
-        console.log(`🔍 Starting upscale ${scale}x...`);
+        log(`🔍 Starting upscale ${scale}x...`);
 
         // Call upscale API
         const response = await fetch(`${API_BASE_URL}/upscale`, {
@@ -620,10 +630,10 @@ async function handleUpscale() {
             throw new Error(data.error || 'Upscale failed');
         }
 
-        console.log('✅ Upscale complete!');
-        console.log(`   Original: ${data.original_resolution}`);
-        console.log(`   Upscaled: ${data.upscaled_resolution}`);
-        console.log(`   Cost: $${data.cost_estimate.toFixed(3)}`);
+        log('✅ Upscale complete!');
+        log(`   Original: ${data.original_resolution}`);
+        log(`   Upscaled: ${data.upscaled_resolution}`);
+        log(`   Cost: $${data.cost_estimate.toFixed(3)}`);
 
         // Auto download upscaled image
         downloadImage(data.upscaled_image_base64, 'planning-upscaled.png');
@@ -631,7 +641,7 @@ async function handleUpscale() {
         showSuccess(`✓ Upscaled to ${data.upscaled_resolution} and downloaded!`);
 
     } catch (error) {
-        console.error('❌ Upscale error:', error);
+        logError('❌ Upscale error:', error);
         showError(`Upscale error: ${error.message}`);
     } finally {
         // Re-enable button
@@ -655,7 +665,7 @@ function downloadImage(base64Data, filename) {
     link.click();
     document.body.removeChild(link);
 
-    console.log(`📥 Downloaded: ${filename}`);
+    log(`📥 Downloaded: ${filename}`);
 }
 
 /**

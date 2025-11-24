@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 api/analyze.py - Sketch Analysis Endpoint
 ✅ FIX: Thread-safe instances to prevent race conditions
 ✅ FIX: Caching to avoid redundant API calls
@@ -15,7 +16,7 @@ from core.thread_local import (
 )
 from config import Models
 
-analyze_bp = Blueprint('analyze', __name__)
+analyze_bp = Bluelogger.info('analyze', __name__)
 
 
 @analyze_bp.route('/analyze-sketch', methods=['POST'])
@@ -72,11 +73,11 @@ def analyze_sketch():
             cached_result['is_colored'] = sketch_info.is_colored
             cached_result['sketch_type'] = sketch_info.sketch_type
 
-            print("✅ Returning cached analysis result")
+            logger.info("✅ Returning cached analysis result")
             return jsonify(cached_result)
 
         # ✅ CACHE MISS: Analyze with Gemini
-        print("🔍 Cache miss - calling Gemini API...")
+        logger.debug("🔍 Cache miss - calling Gemini API...")
         analysis_prompt = prompt_builder.build_analysis_prompt()
 
         analysis_result = gemini.generate_content_json(
@@ -98,7 +99,7 @@ def analyze_sketch():
     except Exception as e:
         # SỬA LỖI: In lỗi thực sự ra console để debug
         # Chúng ta cần biết lý do API call thất bại (thường là do API key)
-        print(f"❌ [ANALYZE_SKETCH_ERROR] {str(e)}")
+        logger.error(f"❌ [ANALYZE_SKETCH_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
         
