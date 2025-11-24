@@ -347,29 +347,35 @@ function fillFormFromAnalysis(data) {
 
     // Critical elements
     const criticalContainer = document.getElementById('criticalElementsContainer');
-    criticalContainer.innerHTML = '';
-    if (data.critical_elements) {
-        data.critical_elements.forEach(elem => {
-            addDynamicItem(criticalContainer, 'element', elem.type, elem.description);
-        });
+    if (criticalContainer) {
+        criticalContainer.innerHTML = '';
+        if (data.critical_elements) {
+            data.critical_elements.forEach(elem => {
+                addDynamicItem(criticalContainer, 'element', elem.type, elem.description);
+            });
+        }
     }
-    
+
     // Materials
     const materialsContainer = document.getElementById('materialsPreciseContainer');
-    materialsContainer.innerHTML = '';
-    if (data.materials_precise) {
-        data.materials_precise.forEach(mat => {
-            addDynamicItem(materialsContainer, 'material', mat.type, mat.description);
-        });
+    if (materialsContainer) {
+        materialsContainer.innerHTML = '';
+        if (data.materials_precise) {
+            data.materials_precise.forEach(mat => {
+                addDynamicItem(materialsContainer, 'material', mat.type, mat.description);
+            });
+        }
     }
-    
+
     // Environment
     const envContainer = document.getElementById('environmentContainer');
-    envContainer.innerHTML = '';
-    if (data.environment) {
-        data.environment.forEach(env => {
-            addDynamicItem(envContainer, 'setting', env.type, env.description);
-        });
+    if (envContainer) {
+        envContainer.innerHTML = '';
+        if (data.environment) {
+            data.environment.forEach(env => {
+                addDynamicItem(envContainer, 'setting', env.type, env.description);
+            });
+        }
     }
     
     // Technical specs

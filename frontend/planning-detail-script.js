@@ -37,10 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============== EVENT LISTENERS ==============
 function setupEventListeners() {
     // File upload
-    uploadSketch.addEventListener('change', handleImageUpload);
+    if (uploadSketch) {
+        uploadSketch.addEventListener('change', handleImageUpload);
+    } else {
+        console.error('❌ uploadSketch element not found');
+    }
 
     // Click preview to re-upload
-    previewImage.addEventListener('click', () => uploadSketch.click());
+    if (previewImage && uploadSketch) {
+        previewImage.addEventListener('click', () => uploadSketch.click());
+    }
 
     // Analyze button
     const analyzeButton = document.getElementById('analyzeSketchButton');
@@ -49,7 +55,11 @@ function setupEventListeners() {
     }
 
     // Generate button
-    generateButton.addEventListener('click', generateRender);
+    if (generateButton) {
+        generateButton.addEventListener('click', generateRender);
+    } else {
+        console.error('❌ generateButton element not found');
+    }
 
     // Download button
     document.addEventListener('click', (e) => {
