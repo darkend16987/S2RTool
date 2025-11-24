@@ -176,45 +176,6 @@ function setupEnvironmentDropdowns() {
  * ✅ Maintains quality - uses high-quality downscaling
  * ✅ Matches backend max size (1024px) to avoid wasted bandwidth
  */
-async function optimizeImageForUpload(file) {
-    const MAX_DIMENSION = 1024; // Match backend resize limit
-
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let { width, height } = img;
-
-            // Calculate new dimensions if image is larger than backend will use
-            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-                const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
-
-                log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
-            } else {
-                log(`📐 Image already optimal: ${width}×${height}`);
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-
-            const ctx = canvas.getContext('2d');
-
-            // ✅ HIGH QUALITY downscaling
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-
-            // Draw resized image
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // Convert to blob (PNG lossless)
-            canvas.toBlob(resolve, 'image/png');
-        };
-        img.src = URL.createObjectURL(file);
-    });
-}
-
 // ============== IMAGE UPLOAD ==============
 async function handleImageUpload(event) {
     const file = event.target.files[0];
@@ -1163,21 +1124,6 @@ function exportToJSON() {
 }
 
 // ============== HELPER FUNCTIONS ==============
-function showSpinner(id, show) {
-    const spinner = document.getElementById(id);
-    if (spinner) {
-        spinner.classList.toggle('hidden', !show);
-    }
-}
-
-function showError(id, message) {
-    const errorDiv = document.getElementById(id);
-    if (errorDiv) {
-        errorDiv.textContent = message;
-        errorDiv.classList.remove('hidden');
-    }
-}
-
 function hideError(id) {
     const errorDiv = document.getElementById(id);
     if (errorDiv) {
@@ -1186,26 +1132,12 @@ function hideError(id) {
 }
 
 // ⭐ NEW: Success message functions
-function showSuccess(id, message) {
-    const successDiv = document.getElementById(id);
-    if (successDiv) {
-        successDiv.textContent = message;
-        successDiv.classList.remove('hidden');
-        
-        // Auto-hide sau 4 giây
-        setTimeout(() => {
-            successDiv.classList.add('hidden');
-        }, 4000);
-    }
-}
-
 function hideSuccess(id) {
     const successDiv = document.getElementById(id);
     if (successDiv) {
         successDiv.classList.add('hidden');
     }
 }
-
 
 // ========================================
 // UPSCALE FUNCTIONALITY
