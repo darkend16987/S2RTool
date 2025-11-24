@@ -12,64 +12,11 @@ let currentLotMapImage = null;
 let isPlanningRendering = false;
 
 // ============== IMAGE OPTIMIZATION ==============
-async function optimizeImageForUpload(file) {
-    const MAX_DIMENSION = 1024;
-
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let { width, height } = img;
-
-            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-                const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
-
-                log(`📐 Resizing image: ${img.width}×${img.height} → ${width}×${height}`);
-            } else {
-                log(`📐 Image already optimal: ${width}×${height}`);
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-
-            const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, width, height);
-
-            canvas.toBlob(resolve, 'image/png');
-        };
-        img.src = URL.createObjectURL(file);
-    });
-}
-
 // ============== HELPER FUNCTIONS ==============
-function showError(id, message) {
-    const errorDiv = document.getElementById(id);
-    if (errorDiv) {
-        errorDiv.textContent = message;
-        errorDiv.classList.remove('hidden');
-    }
-}
-
 function hideError(id) {
     const errorDiv = document.getElementById(id);
     if (errorDiv) {
         errorDiv.classList.add('hidden');
-    }
-}
-
-function showSuccess(id, message) {
-    const successDiv = document.getElementById(id);
-    if (successDiv) {
-        successDiv.textContent = message;
-        successDiv.classList.remove('hidden');
-
-        setTimeout(() => {
-            successDiv.classList.add('hidden');
-        }, 4000);
     }
 }
 

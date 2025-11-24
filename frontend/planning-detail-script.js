@@ -534,14 +534,6 @@ function handleDownloadImage() {
 }
 
 // ============== UI HELPERS ==============
-function showError(elementId, message) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.textContent = message;
-        el.classList.remove('hidden');
-    }
-}
-
 function hideError(elementId) {
     const el = document.getElementById(elementId);
     if (el) {
@@ -549,29 +541,10 @@ function hideError(elementId) {
     }
 }
 
-function showSuccess(elementId, message) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.textContent = message;
-        el.classList.remove('hidden');
-    }
-}
-
 function hideSuccess(elementId) {
     const el = document.getElementById(elementId);
     if (el) {
         el.classList.add('hidden');
-    }
-}
-
-function showSpinner(spinnerId, show) {
-    const spinner = document.getElementById(spinnerId);
-    if (spinner) {
-        if (show) {
-            spinner.classList.remove('hidden');
-        } else {
-            spinner.classList.add('hidden');
-        }
     }
 }
 
