@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 core/translator.py - Vietnamese to English Translation
 """
 
@@ -87,24 +88,24 @@ class Translator:
         translated_floor_count = translated.get('floor_count', '')
 
         if original_floor_count and not translated_floor_count:
-            print(f"🚨 CRITICAL WARNING: Floor count MISSING in translation!")
-            print(f"   Original: '{original_floor_count}' → Translated: NONE")
-            print(f"   This MUST be preserved for architectural accuracy!")
+            logger.warning(f"🚨 CRITICAL WARNING: Floor count MISSING in translation!")
+            logger.info(f"   Original: '{original_floor_count}' → Translated: NONE")
+            logger.info(f"   This MUST be preserved for architectural accuracy!")
         elif original_floor_count and translated_floor_count:
             # Extract numbers for comparison
             import re
             orig_num = re.findall(r'\d+', str(original_floor_count))
             trans_num = re.findall(r'\d+', str(translated_floor_count))
             if orig_num != trans_num:
-                print(f"⚠️ WARNING: Floor count NUMBER changed in translation!")
-                print(f"   Original: '{original_floor_count}' ({orig_num}) → Translated: '{translated_floor_count}' ({trans_num})")
+                logger.error(f"⚠️ WARNING: Floor count NUMBER changed in translation!")
+                logger.info(f"   Original: '{original_floor_count}' ({orig_num}) → Translated: '{translated_floor_count}' ({trans_num})")
 
         # ✅ FIX: Check materials count
         original_materials = len(original.get('materials_precise', []))
         translated_materials = len(translated.get('materials_precise', []))
 
         if translated_materials < original_materials * 0.8:  # Allow 20% loss
-            print(f"⚠️ Warning: Lost {original_materials - translated_materials} materials in translation")
+            logger.error(f"⚠️ Warning: Lost {original_materials - translated_materials} materials in translation")
 
         # ✅ ADD: Check environment items count (CRITICAL for people, vehicles, time of day)
         original_environment = len(original.get('environment', []))
@@ -112,9 +113,9 @@ class Translator:
 
         if translated_environment < original_environment:
             lost_count = original_environment - translated_environment
-            print(f"⚠️ WARNING: Lost {lost_count} environment items in translation!")
-            print(f"   Original: {original_environment} items → Translated: {translated_environment} items")
-            print(f"   This may cause missing people, vehicles, or time-of-day context!")
+            logger.error(f"⚠️ WARNING: Lost {lost_count} environment items in translation!")
+            logger.info(f"   Original: {original_environment} items → Translated: {translated_environment} items")
+            logger.info(f"   This may cause missing people, vehicles, or time-of-day context!")
 
             # Log which items were lost
             original_types = {e.get('type', 'Unknown') for e in original.get('environment', [])}
@@ -122,4 +123,4 @@ class Translator:
             missing_types = original_types - translated_types
 
             if missing_types:
-                print(f"   Missing types: {', '.join(missing_types)}")
+                logger.info(f"   Missing types: {', '.join(missing_types)}")

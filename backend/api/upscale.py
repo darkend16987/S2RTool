@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 api/upscale.py - Image Upscaling Endpoint
 Upscales rendered images using Replicate Real-ESRGAN
 """
@@ -10,7 +11,7 @@ from flask import Blueprint, request, jsonify
 from core.thread_local import get_image_processor
 from core.upscale_client import UpscaleClient
 
-upscale_bp = Blueprint('upscale', __name__)
+upscale_bp = Bluelogger.info('upscale', __name__)
 
 
 @upscale_bp.route('/upscale', methods=['POST'])
@@ -55,10 +56,10 @@ def upscale_image():
 
         original_width, original_height = image_pil.size
 
-        print(f"🔍 Upscaling image...")
-        print(f"   Original: {original_width}x{original_height}")
-        print(f"   Scale: {scale}x")
-        print(f"   Target: {original_width * scale}x{original_height * scale}")
+        logger.debug(f"🔍 Upscaling image...")
+        logger.info(f"   Original: {original_width}x{original_height}")
+        logger.info(f"   Scale: {scale}x")
+        logger.info(f"   Target: {original_width * scale}x{original_height * scale}")
 
         # Initialize upscale client
         upscale_client = UpscaleClient()
@@ -77,9 +78,9 @@ def upscale_image():
         # Estimate cost
         cost_estimate = upscale_client.estimate_cost(scale)
 
-        print(f"✅ Upscale complete!")
-        print(f"   Output: {upscaled_pil.width}x{upscaled_pil.height}")
-        print(f"   Cost: ${cost_estimate:.3f}")
+        logger.info(f"✅ Upscale complete!")
+        logger.info(f"   Output: {upscaled_pil.width}x{upscaled_pil.height}")
+        logger.info(f"   Cost: ${cost_estimate:.3f}")
 
         return jsonify({
             "upscaled_image_base64": output_base64_full,
@@ -91,11 +92,11 @@ def upscale_image():
         })
 
     except ValueError as e:
-        print(f"❌ [UPSCALE_VALIDATION_ERROR] {str(e)}")
+        logger.error(f"❌ [UPSCALE_VALIDATION_ERROR] {str(e)}")
         return jsonify({"error": str(e)}), 400
 
     except Exception as e:
-        print(f"❌ [UPSCALE_ERROR] {str(e)}")
+        logger.error(f"❌ [UPSCALE_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
 
@@ -142,5 +143,5 @@ def estimate_upscale_cost():
         })
 
     except Exception as e:
-        print(f"❌ [ESTIMATE_COST_ERROR] {str(e)}")
+        logger.error(f"❌ [ESTIMATE_COST_ERROR] {str(e)}")
         return jsonify({"error": str(e)}), 500

@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 core/upscale_client.py - Image Upscaling with Replicate Real-ESRGAN
 Handles upscaling of generated images using Replicate API
 """
@@ -36,8 +37,8 @@ class UpscaleClient:
 
         # Validate API token format
         if not self.api_token.startswith("r8_"):
-            print(f"⚠️  WARNING: Replicate API token format looks suspicious!")
-            print(f"   Token should start with 'r8_'")
+            logger.error(f"⚠️  WARNING: Replicate API token format looks suspicious!")
+            logger.info(f"   Token should start with 'r8_'")
 
     def upscale(self, image_pil, scale=2):
         """
@@ -57,9 +58,9 @@ class UpscaleClient:
         if scale not in [2, 4]:
             raise ValueError(f"Scale must be 2 or 4, got {scale}")
 
-        print(f"🔍 Starting upscale {scale}x...")
-        print(f"   Input size: {image_pil.width}x{image_pil.height}")
-        print(f"   Target size: {image_pil.width * scale}x{image_pil.height * scale}")
+        logger.debug(f"🔍 Starting upscale {scale}x...")
+        logger.info(f"   Input size: {image_pil.width}x{image_pil.height}")
+        logger.info(f"   Target size: {image_pil.width * scale}x{image_pil.height * scale}")
 
         try:
             # Import replicate here (lazy import)
@@ -76,7 +77,7 @@ class UpscaleClient:
                 "scale": scale
             }
 
-            print(f"   📤 Uploading to Replicate...")
+            logger.info(f"   📤 Uploading to Replicate...")
 
             # Run Real-ESRGAN model
             output = replicate.run(
@@ -84,7 +85,7 @@ class UpscaleClient:
                 input=input_data
             )
 
-            print(f"   ⏳ Processing on Replicate...")
+            logger.info(f"   ⏳ Processing on Replicate...")
 
             # Download result
             # output is a FileOutput object with .read() method
@@ -93,8 +94,8 @@ class UpscaleClient:
             # Convert to PIL Image
             upscaled_pil = Image.open(io.BytesIO(upscaled_bytes))
 
-            print(f"   ✅ Upscale complete!")
-            print(f"   Output size: {upscaled_pil.width}x{upscaled_pil.height}")
+            logger.info(f"   ✅ Upscale complete!")
+            logger.info(f"   Output size: {upscaled_pil.width}x{upscaled_pil.height}")
 
             return upscaled_pil
 
@@ -104,7 +105,7 @@ class UpscaleClient:
                 "Install it with: pip install replicate"
             )
         except Exception as e:
-            print(f"   ❌ Upscale failed: {str(e)}")
+            logger.error(f"   ❌ Upscale failed: {str(e)}")
             raise Exception(f"Upscale failed: {str(e)}")
 
     def upscale_from_url(self, image_url, scale=2):
@@ -121,8 +122,8 @@ class UpscaleClient:
         if scale not in [2, 4]:
             raise ValueError(f"Scale must be 2 or 4, got {scale}")
 
-        print(f"🔍 Starting upscale {scale}x from URL...")
-        print(f"   URL: {image_url[:80]}...")
+        logger.debug(f"🔍 Starting upscale {scale}x from URL...")
+        logger.info(f"   URL: {image_url[:80]}...")
 
         try:
             import replicate
@@ -133,7 +134,7 @@ class UpscaleClient:
                 "scale": scale
             }
 
-            print(f"   📤 Sending to Replicate...")
+            logger.info(f"   📤 Sending to Replicate...")
 
             # Run Real-ESRGAN model
             output = replicate.run(
@@ -141,14 +142,14 @@ class UpscaleClient:
                 input=input_data
             )
 
-            print(f"   ⏳ Processing on Replicate...")
+            logger.info(f"   ⏳ Processing on Replicate...")
 
             # Download result
             upscaled_bytes = output.read()
             upscaled_pil = Image.open(io.BytesIO(upscaled_bytes))
 
-            print(f"   ✅ Upscale complete!")
-            print(f"   Output size: {upscaled_pil.width}x{upscaled_pil.height}")
+            logger.info(f"   ✅ Upscale complete!")
+            logger.info(f"   Output size: {upscaled_pil.width}x{upscaled_pil.height}")
 
             return upscaled_pil
 
@@ -158,7 +159,7 @@ class UpscaleClient:
                 "Install it with: pip install replicate"
             )
         except Exception as e:
-            print(f"   ❌ Upscale failed: {str(e)}")
+            logger.error(f"   ❌ Upscale failed: {str(e)}")
             raise Exception(f"Upscale failed: {str(e)}")
 
     def estimate_cost(self, scale=2):

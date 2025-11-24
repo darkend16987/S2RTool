@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 api/settings.py - User Settings Management
 Allows users to configure API key and model selections through UI
 """
@@ -9,7 +10,7 @@ from pathlib import Path
 from flask import Blueprint, request, jsonify
 from config import Models, Defaults
 
-settings_bp = Blueprint('settings', __name__)
+settings_bp = Bluelogger.info('settings', __name__)
 
 # Path to user config file
 USER_CONFIG_PATH = Path(__file__).parent.parent / 'user_config.json'
@@ -62,7 +63,7 @@ def load_user_config():
 
             return user_config
         except Exception as e:
-            print(f"⚠️  Error loading user config: {e}")
+            logger.error(f"⚠️  Error loading user config: {e}")
             return get_default_config()
     else:
         return get_default_config()
@@ -73,10 +74,10 @@ def save_user_config(config):
     try:
         with open(USER_CONFIG_PATH, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
-        print(f"✅ User config saved to {USER_CONFIG_PATH}")
+        logger.info(f"✅ User config saved to {USER_CONFIG_PATH}")
         return True
     except Exception as e:
-        print(f"❌ Error saving user config: {e}")
+        logger.error(f"❌ Error saving user config: {e}")
         return False
 
 
@@ -147,7 +148,7 @@ def get_settings():
         })
 
     except Exception as e:
-        print(f"❌ [GET_SETTINGS_ERROR] {str(e)}")
+        logger.error(f"❌ [GET_SETTINGS_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -195,7 +196,7 @@ def update_settings():
 
             # Update environment variable for current session
             os.environ["GEMINI_API_KEY"] = api_key
-            print(f"✅ API key updated (session): {api_key[:10]}...{api_key[-4:]}")
+            logger.info(f"✅ API key updated (session): {api_key[:10]}...{api_key[-4:]}")
 
         # Update Replicate API token if provided
         if "replicate_api_token" in data and data["replicate_api_token"]:
@@ -210,7 +211,7 @@ def update_settings():
 
             # Update environment variable for current session
             os.environ["REPLICATE_API_TOKEN"] = replicate_token
-            print(f"✅ Replicate token updated (session): {replicate_token[:6]}...{replicate_token[-4:]}")
+            logger.info(f"✅ Replicate token updated (session): {replicate_token[:6]}...{replicate_token[-4:]}")
 
         # Update models if provided
         if "models" in data:
@@ -236,7 +237,7 @@ def update_settings():
             }), 500
 
     except Exception as e:
-        print(f"❌ [UPDATE_SETTINGS_ERROR] {str(e)}")
+        logger.error(f"❌ [UPDATE_SETTINGS_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -267,7 +268,7 @@ def reset_settings():
             }), 500
 
     except Exception as e:
-        print(f"❌ [RESET_SETTINGS_ERROR] {str(e)}")
+        logger.error(f"❌ [RESET_SETTINGS_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -326,7 +327,7 @@ def test_api_key():
                 }), 400
 
     except Exception as e:
-        print(f"❌ [TEST_API_KEY_ERROR] {str(e)}")
+        logger.error(f"❌ [TEST_API_KEY_ERROR] {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

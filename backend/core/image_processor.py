@@ -1,4 +1,5 @@
 """
+from core.logger import logger
 core/image_processor.py - Image Processing with CV2
 """
 
@@ -61,7 +62,7 @@ class ImageProcessor:
             return pil_image, mime_type
             
         except Exception as e:
-            print(f"Error processing base64 image: {e}")
+            logger.error(f"Error processing base64 image: {e}")
             return None, None
     
     def detect_sketch_type(self, pil_image: Image.Image) -> SketchInfo:
