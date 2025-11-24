@@ -22,18 +22,29 @@ let isRendering = false;
 let isInpainting = false;
 
 // ============== DOM ELEMENTS ==============
-const uploadSketch = document.getElementById('uploadSketch');
-const previewImage = document.getElementById('previewImage');
-const uploadLabel = document.getElementById('uploadLabel');
-const analyzeButton = document.getElementById('analyzeSketchButton');
-const generateButton = document.getElementById('generateRenderButton');
-const gallery = document.getElementById('gallery');
-const aspectRatioSelect = document.getElementById('aspect_ratio');
-const viewpointSelect = document.getElementById('viewpoint');
+let uploadSketch;
+let previewImage;
+let uploadLabel;
+let analyzeButton;
+let generateButton;
+let gallery;
+let aspectRatioSelect;
+let viewpointSelect;
 
 // ============== INIT ==============
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 S2R Tool v3.1 initialized');
+
+    // Initialize DOM elements after DOM is ready
+    uploadSketch = document.getElementById('uploadSketch');
+    previewImage = document.getElementById('previewImage');
+    uploadLabel = document.getElementById('uploadLabel');
+    analyzeButton = document.getElementById('analyzeSketchButton');
+    generateButton = document.getElementById('generateRenderButton');
+    gallery = document.getElementById('gallery');
+    aspectRatioSelect = document.getElementById('aspect_ratio');
+    viewpointSelect = document.getElementById('viewpoint');
+
     loadAspectRatios();
     setupEventListeners();
     setupDynamicContainers();

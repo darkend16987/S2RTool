@@ -12,16 +12,25 @@ let currentRenderedImage = null;
 let isRendering = false;
 
 // ============== DOM ELEMENTS ==============
-const uploadSketch = document.getElementById('uploadSketch');
-const previewImage = document.getElementById('previewImage');
-const uploadLabel = document.getElementById('uploadLabel');
-const generateButton = document.getElementById('generateRenderButton');
-const gallery = document.getElementById('gallery');
-const aspectRatioSelect = document.getElementById('aspect_ratio');
+let uploadSketch;
+let previewImage;
+let uploadLabel;
+let generateButton;
+let gallery;
+let aspectRatioSelect;
 
 // ============== INIT ==============
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Planning Detail Render v1.0 initialized');
+
+    // Initialize DOM elements after DOM is ready
+    uploadSketch = document.getElementById('uploadSketch');
+    previewImage = document.getElementById('previewImage');
+    uploadLabel = document.getElementById('uploadLabel');
+    generateButton = document.getElementById('generateRenderButton');
+    gallery = document.getElementById('gallery');
+    aspectRatioSelect = document.getElementById('aspect_ratio');
+
     setupEventListeners();
 });
 
