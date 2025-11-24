@@ -1,8 +1,8 @@
-"""
-from core.logger import logger
-api/planning.py - Planning Mode Render Endpoint
+"""api/planning.py - Planning Mode Render Endpoint
 Urban planning visualization with multiple lots
 """
+
+from core.logger import logger
 
 import base64
 import io
@@ -15,7 +15,7 @@ from core.thread_local import (
 )
 from config import Models
 
-planning_bp = Bluelogger.info('planning', __name__)
+planning_bp = Blueprint('planning', __name__)
 
 
 @planning_bp.route('/planning/render', methods=['POST'])

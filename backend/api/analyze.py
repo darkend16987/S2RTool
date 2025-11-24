@@ -1,9 +1,9 @@
-"""
-from core.logger import logger
-api/analyze.py - Sketch Analysis Endpoint
+"""api/analyze.py - Sketch Analysis Endpoint
 ✅ FIX: Thread-safe instances to prevent race conditions
 ✅ FIX: Caching to avoid redundant API calls
 """
+
+from core.logger import logger
 
 from flask import Blueprint, request, jsonify
 import io
@@ -16,7 +16,7 @@ from core.thread_local import (
 )
 from config import Models
 
-analyze_bp = Bluelogger.info('analyze', __name__)
+analyze_bp = Blueprint('analyze', __name__)
 
 
 @analyze_bp.route('/analyze-sketch', methods=['POST'])

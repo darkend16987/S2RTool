@@ -1,8 +1,8 @@
-"""
-from core.logger import logger
-api/settings.py - User Settings Management
+"""api/settings.py - User Settings Management
 Allows users to configure API key and model selections through UI
 """
+
+from core.logger import logger
 
 import os
 import json
@@ -10,7 +10,7 @@ from pathlib import Path
 from flask import Blueprint, request, jsonify
 from config import Models, Defaults
 
-settings_bp = Bluelogger.info('settings', __name__)
+settings_bp = Blueprint('settings', __name__)
 
 # Path to user config file
 USER_CONFIG_PATH = Path(__file__).parent.parent / 'user_config.json'
