@@ -3,7 +3,7 @@
  * Manages API key and model configuration
  */
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = '/api';
 
 let currentSettings = null;
 let availableModels = null;
